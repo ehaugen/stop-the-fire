@@ -38,7 +38,7 @@ namespace StopTheFire
                 BoundingBox.Max = Position + halfScale;
 
                 QuadTree prevNode = Game1.Instance.RootQuadTree.FindLeaf(prevPos);
-                Game1.Instance.RootQuadTree.ActorMoved(this, prevNode);
+                //Game1.Instance.RootQuadTree.ParticleMoved(this, prevNode);
             }
         } 
     }

@@ -19,12 +19,14 @@ namespace StopTheFire.Particles
         float ScaleEnd;
         Color StartColor;
         Color EndColor;
-        Emitter Parent;
+        public Emitter Parent{get; set;}
+        public int ParentId { get; set; }
+
         float lifePhase;
 
         public float Radius { get; set; }
 
-        public Particle(Vector2 Position, Vector2 StartDirection, Vector2 EndDirection, float StartingLife, float ScaleBegin, float ScaleEnd, Color StartColor, Color EndColor, Emitter Yourself)
+        public Particle(Vector2 Position, Vector2 StartDirection, Vector2 EndDirection, float StartingLife, float ScaleBegin, float ScaleEnd, Color StartColor, Color EndColor, Emitter parent)
         {
             this.Position = Position;
             this.StartDirection = StartDirection;
@@ -35,7 +37,9 @@ namespace StopTheFire.Particles
             this.ScaleEnd = ScaleEnd;
             this.StartColor = StartColor;
             this.EndColor = EndColor;
-            this.Parent = Yourself;
+            this.Parent = parent;
+            if(parent.MiscId != null)
+                this.ParentId = parent.MiscId.Value;
 
         }
 
@@ -45,7 +49,14 @@ namespace StopTheFire.Particles
             if (LifeLeft <= 0)
                 return false;
             lifePhase = LifeLeft / StartingLife;      // 1 means newly created 0 means dead.
+
+            Vector2 prevPos = Position;
+
             Position += MathLib.LinearInterpolate(EndDirection, StartDirection, lifePhase) * dt;
+
+            QuadTree prevNode = Game1.Instance.RootQuadTree.FindLeaf(new Vector3(prevPos,0));
+            Game1.Instance.RootQuadTree.ParticleMoved(this, prevNode);
+            
             return true;
         }
 

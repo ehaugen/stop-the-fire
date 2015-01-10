@@ -17,8 +17,9 @@ namespace StopTheFire.Particles
         }
         public Vector2 LastPos;
         Random random;
+        String type;
 
-        public ParticleSystem(Vector2 Position)
+        public ParticleSystem(Vector2 Position, string Type)
         {
             this.Position = Position;
             this.LastPos = Position;
@@ -26,13 +27,13 @@ namespace StopTheFire.Particles
             EmitterList = new List<Emitter>();
         }
 
-        public void Update(float dt)
+        public void Update(float dt, ref QuadTree qt)
         {
             for (int i = 0; i < EmitterList.Count; i++)
             {
                 if (EmitterList[i].Budget > 0)
                 {
-                    EmitterList[i].Update(dt);
+                    EmitterList[i].Update(dt, ref qt);
                 }
             }
         }
@@ -81,7 +82,7 @@ namespace StopTheFire.Particles
             Emitter emitter = new Emitter(SecPerSpawn, SpawnDirection, SpawnNoiseAngle,
                                         StartLife, StartScale, EndScale, StartColor1,
                                         StartColor2, EndColor1, EndColor2, StartSpeed,
-                                        EndSpeed, Budget, RelPosition, ParticleSprite, this.random, this, spawnNew, canSpread, miscId);
+                                        EndSpeed, Budget, RelPosition, ParticleSprite, this.random, this, spawnNew, canSpread, type, miscId);
             EmitterList.Add(emitter);
         }
     }

@@ -60,7 +60,7 @@ namespace StopTheFire
         public static Game1 Instance; 
         public Vector3 MapSize; 
         public QuadTree RootQuadTree; 
-        List<Actor> actors; 
+        List<Particle> particles; 
         Random rand; 
         //float maxActorSpeed = 100f; 
         //int actorSpriteSize = 8; 
@@ -96,9 +96,9 @@ namespace StopTheFire
         protected override void Initialize()
         {
             Viewport viewport = GraphicsDevice.Viewport;
-            MapSize = new Vector3(viewport.Width, 0, viewport.Height);
+            MapSize = new Vector3(viewport.Width, viewport.Height, 0);
 
-            actors = new List<Actor>();
+            particles = new List<Particle>();
 
             RootQuadTree = new QuadTree(Vector3.Zero, MapSize);
             //fps = new FrameRateCounter(); 
@@ -108,12 +108,12 @@ namespace StopTheFire
             truckVelocity = new Vector2(100f, 0);
 
             waterSprayStartPosition = new Vector2(476, 407);            
-            waterSprayParticleSystem = new ParticleSystem(waterSprayStartPosition);
+            waterSprayParticleSystem = new ParticleSystem(waterSprayStartPosition, "WATER");
             waterSprayDistance = waterSprayDistanceMin = new Vector2(0.25f, 0.375f);
             waterSprayDistanceMax = new Vector2(0.75f, 1.25f);
 
             fireStartPosition = new Vector2(0,0);
-            fireParticleSystem = new ParticleSystem(fireStartPosition);
+            fireParticleSystem = new ParticleSystem(fireStartPosition, "FIRE");
             fireHeight = fireHeightStart = new Vector2(0.1f, 0.15f);
             fireHeightMax = new Vector2(0.25f, 0.375f);
 
@@ -286,7 +286,7 @@ namespace StopTheFire
 
 
             waterSprayParticleSystem.Position = waterSprayStartPosition;
-            waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
+            waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, ref RootQuadTree);
 
             
 
@@ -296,12 +296,7 @@ namespace StopTheFire
             var spreadFire = false;
             int spreadWindowId = -1;
 
-            //CollisionDetection();
-
-            //foreach (Actor actor in actors)
-            //{
-            //    actor.Update(gameTime);
-            //} 
+            CollisionDetection();
 
             //foreach (Emitter emitter in fireParticleSystem.EmitterList)
             //{
@@ -395,33 +390,12 @@ namespace StopTheFire
                 spreadFire = false;
             }
 
-            fireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
+            fireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, ref RootQuadTree);
 
             //BreakForEach:
-                        
 
             base.Update(gameTime);
-        }
-
-        //void AddActor()
-        //{
-        //    Point halfScale = new Point((int)(MapSize.X * 0.5f), (int)(MapSize.Z * 0.5f));
-        //    Vector3 position = new Vector3(rand.Next(-halfScale.X, halfScale.X), 0, rand.Next(-halfScale.Y, halfScale.Y));
-        //    Vector3 scale = new Vector3(actorSpriteSize);
-        //    Color color = Color.White;
-
-        //    Actor actor = new Actor(position, scale, color);
-        //    actor.Velocity = new Vector3(((float)rand.NextDouble() - 0.5f) * maxActorSpeed, 0f, ((float)rand.NextDouble() - 0.5f) * maxActorSpeed);
-
-        //    actors.Add(actor);
-        //    RootQuadTree.AddActor(actor);
-        //}
-
-        //void RemoveActor()
-        //{
-        //    if (actors.Count > 0)
-        //        actors.RemoveAt(actors.Count - 1);  // TODO: Also emove from Quadtree
-        //}
+        }        
 
         List<QuadTree> leavesInsideFrustum;
 
@@ -433,28 +407,64 @@ namespace StopTheFire
 
             foreach (QuadTree leaf in leavesInsideFrustum)
             {
-                CollisionDetection(leaf.Actors);
+                CollisionDetection(leaf.Particles);
             }
 
         }
 
-        void CollisionDetection(List<Actor> actors)
+        void CollisionDetection(List<Particle> particles)
         {
-            int count = actors.Count;
-            Actor actor1, actor2;
+            int count = particles.Count;
+            Particle particle1, particle2;
 
             for (int i = 0; i < count; i++)
             {
-                actor1 = actors[i];
-
+                particle1 = particles[i];
+                
                 for (int j = i + 1; j < count; j++)
                 {
-                    actor2 = actors[j];
+                    particle2 = particles[j];
 
-                    if (actor1.BoundingBox.Intersects(actor2.BoundingBox))
+                    //TODO: Checking particle ParentId should be sufficient since particles from different fire emitters should never cross--
+                    //if that ever becomes possible, the following will fail, so should be updated to account for that at some point
+                    if (!particle1.ParentId.Equals(particle2.ParentId) && particle1.BoundingBox.Intersects(particle2.BoundingBox))
                     {
-                        actor1.Velocity = -actor1.Velocity;
-                        actor2.Velocity = -actor2.Velocity;
+                        Particle fireParticle, waterParticle;
+
+                        //determine water particle
+                        if (particle1.Parent.Type.Equals("WATER"))
+                        {
+                            waterParticle = particle1;
+                            fireParticle = particle2;
+                        }
+                        else
+                        {
+                            fireParticle = particle1;
+                            waterParticle = particle2;
+                        }
+                            
+                        //shrink fire
+                        foreach(Emitter emitter in fireParticleSystem.EmitterList)
+                        {
+                            if (emitter.MiscId.Equals(fireParticle.ParentId))
+                            {
+                                emitter.StartLife.X -= .000001f;
+                                emitter.StartLife.Y -= .000001f;
+
+                                if (emitter.StartLife.X < .025f)
+                                {
+                                    emitter.SpawnNew = false;
+                                    emitter.Clear();
+                                }
+
+                                break;
+                            }
+                        }
+
+                        //remove particles
+                        particles.Remove(particle1);
+                        particles.Remove(particle2);
+
                         ++collisionCount;
                     }
                 }
@@ -487,16 +497,6 @@ namespace StopTheFire
             spriteBatch.End();
 
             base.Draw(gameTime);
-        }
-
-        private bool IsCollision(float x1, float y1, float radius1, float x2, float y2, float radius2)
-        {
-            var v1 = new Vector2(x1, y1);
-            var v2 = new Vector2(x2, y2);
-
-            var distance = v1 - v2;
-
-            return distance.Length() < radius1 + radius2;
         }
     }
 

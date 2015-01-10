@@ -3,68 +3,69 @@ using Microsoft.Xna.Framework;
 using System;
 
 using StopTheFire.Extensions;
+using StopTheFire.Particles;
 
 namespace StopTheFire
 {
     public class QuadTree
     {
-        public static int MaxActors = 50; // threshold 
+        public static int MaxParticles = 50; // threshold 
         public readonly BoundingBox BoundingBox; // must be readonly, the bounding box must never change after construction 
-        public List<Actor> Actors;
+        public List<Particle> Particles;
         public QuadTree[] nodes;
 
         public QuadTree(Vector3 position, Vector3 scale)
         {
             Vector3 halfScale = scale * 0.5f;
             BoundingBox = new BoundingBox(position - halfScale, position + halfScale);
-            Actors = new List<Actor>(MaxActors);
+            Particles = new List<Particle>(MaxParticles);
         }
 
-        public bool AddActor(Actor actor)
+        public bool AddParticle(Particle particle)
         {
-            if (BoundingBox.Contains(actor.Position) == ContainmentType.Contains)
+            if (BoundingBox.Contains(new Vector3(particle.Position,0)) == ContainmentType.Contains)
             {
                 if (nodes == null) // we have no nodes so we are a leaf 
                 {
-                    if (Actors.Count < MaxActors)
+                    if (Particles.Count < MaxParticles)
                     {
-                        Actors.Add(actor);
+                        Particles.Add(particle);
                         return true;
                     }
                     Split(); // we are a leaf and we already contain MaxActors so we need to split. this will only happen once for this node 
 
                     if (nodes == null) // we can't split because have run out of space, so lets just increase the threshold 
                     {
-                        MaxActors *= 2;
-                        return AddActor(actor);
+                        MaxParticles *= 2;
+                        return AddParticle(particle);
                     }
                 }
-                if (!nodes[0].AddActor(actor))
-                    if (!nodes[1].AddActor(actor))
-                        if (!nodes[2].AddActor(actor))
-                            nodes[3].AddActor(actor); // if it's not the other 3, it must be this 1. 
+                if (!nodes[0].AddParticle(particle))
+                    if (!nodes[1].AddParticle(particle))
+                        if (!nodes[2].AddParticle(particle))
+                            nodes[3].AddParticle(particle); // if it's not the other 3, it must be this 1. 
                 return true;
             }
             return false;
         }
 
-        public bool ActorMoved(Actor actor, QuadTree prevPosition)
+        public bool ParticleMoved(Particle particle, QuadTree prevPosition)
         {
-            if (BoundingBox.Contains(actor.Position) == ContainmentType.Contains)
+            if (BoundingBox.Contains(new Vector3(particle.Position, 0)) == ContainmentType.Contains)
             {
                 if (nodes == null) // we have no nodes so we are a leaf 
                 {
                     if (this != prevPosition)
                     {
-                        if (prevPosition != null) prevPosition.Actors.Remove(actor);
-                        AddActor(actor);
+                        if (prevPosition != null) prevPosition.Particles.Remove(particle);
+                        AddParticle(particle);
                     }
                     return true;
                 }
-                if (!nodes[0].ActorMoved(actor, prevPosition))
-                    if (!nodes[1].ActorMoved(actor, prevPosition))
-                        if (!nodes[2].ActorMoved(actor, prevPosition))
-                            nodes[3].ActorMoved(actor, prevPosition); // if it's not the other 3, it must be this 1. 
+                if (!nodes[0].ParticleMoved(particle, prevPosition))
+                    if (!nodes[1].ParticleMoved(particle, prevPosition))
+                        if (!nodes[2].ParticleMoved(particle, prevPosition))
+                            nodes[3].ParticleMoved(particle, prevPosition); // if it's not the other 3, it must be this 1. 
                 return true;
             }
             return false;
@@ -122,10 +123,10 @@ namespace StopTheFire
 
             if (qtrScale != Vector3.Zero)
             {
-                Vector3 topLeftPosition = BoundingBox.Min + new Vector3(qtrScale.X, 0, qtrScale.Z);
-                Vector3 topRightPosition = BoundingBox.Min + new Vector3(qtrScale.X + halfScale.X, 0, qtrScale.Z);
-                Vector3 bottomLeftPosition = BoundingBox.Min + new Vector3(qtrScale.X, 0, qtrScale.Z + halfScale.Z);
-                Vector3 bottomRightPosition = BoundingBox.Min + new Vector3(qtrScale.X + halfScale.X, 0, qtrScale.Z + halfScale.Z);
+                Vector3 topLeftPosition = BoundingBox.Min + new Vector3(qtrScale.X, qtrScale.Y, 0);
+                Vector3 topRightPosition = BoundingBox.Min + new Vector3(qtrScale.X + halfScale.X, qtrScale.Y, 0);
+                Vector3 bottomLeftPosition = BoundingBox.Min + new Vector3(qtrScale.X, qtrScale.Y + halfScale.Y, 0);
+                Vector3 bottomRightPosition = BoundingBox.Min + new Vector3(qtrScale.X + halfScale.X, qtrScale.Y + halfScale.Y, 0);
 
                 nodes = new QuadTree[4];
                 nodes[0] = new QuadTree(topLeftPosition, halfScale);
@@ -133,19 +134,19 @@ namespace StopTheFire
                 nodes[2] = new QuadTree(bottomLeftPosition, halfScale);
                 nodes[3] = new QuadTree(bottomRightPosition, halfScale);
 
-                ReassignActors();
-                Actors.Clear();
+                ReassignParticles();
+                Particles.Clear();
             }
         }
 
-        void ReassignActors()
+        void ReassignParticles()
         {
-            foreach (Actor actor in Actors)
+            foreach (Particle particle in Particles)
             {
-                if (!nodes[0].AddActor(actor))
-                    if (!nodes[1].AddActor(actor))
-                        if (!nodes[2].AddActor(actor))
-                            nodes[3].AddActor(actor); // if it's not the other 3, it must be this 1. 
+                if (!nodes[0].AddParticle(particle))
+                    if (!nodes[1].AddParticle(particle))
+                        if (!nodes[2].AddParticle(particle))
+                            nodes[3].AddParticle(particle); // if it's not the other 3, it must be this 1. 
             }
         }
     }

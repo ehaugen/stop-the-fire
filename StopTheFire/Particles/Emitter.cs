@@ -31,6 +31,7 @@ namespace StopTheFire.Particles
         public bool SpawnNew;
         public int? MiscId;
         public bool CanSpread;
+        public string Type;        
 
         public ParticleSystem Parent;
         
@@ -53,6 +54,7 @@ namespace StopTheFire.Particles
                         ,ParticleSystem parent
                         ,bool spawnNew
                         ,bool canSpread
+                        ,string type
                         ,int? miscId = null)
         {
             this.SecPerSpawn = SecPerSpawn;
@@ -77,10 +79,11 @@ namespace StopTheFire.Particles
             this.SecPassed = 0.0f;
             this.SpawnNew = spawnNew;
             this.CanSpread = canSpread;
+            this.Type = type;
             if (miscId != null) { MiscId = miscId.Value; }
         }
 
-        public void Update(float dt)
+        public void Update(float dt, ref QuadTree qt)
         {
             SecPassed += dt;
             while (SecPassed > NextSpawnIn)
@@ -92,7 +95,8 @@ namespace StopTheFire.Particles
                     StartDirection.Normalize();
                     Vector2 EndDirection = StartDirection * MathLib.LinearInterpolate(EndSpeed.X, EndSpeed.Y, random.NextDouble());
                     StartDirection *= MathLib.LinearInterpolate(StartSpeed.X, StartSpeed.Y, random.NextDouble());
-                    ActiveParticles.AddLast(new Particle(
+
+                    Particle particle = new Particle(
                         RelPosition + MathLib.LinearInterpolate(Parent.LastPos, Parent.Position, SecPassed / dt),
                         StartDirection,
                         EndDirection,
@@ -101,8 +105,10 @@ namespace StopTheFire.Particles
                         MathLib.LinearInterpolate(EndScale.X, EndScale.Y, random.NextDouble()),
                         MathLib.LinearInterpolate(StartColor1, StartColor2, random.NextDouble()),
                         MathLib.LinearInterpolate(EndColor1, EndColor2, random.NextDouble()),
-                        this)
-                    );
+                        this);
+                    
+                    ActiveParticles.AddLast(particle);
+                    qt.AddParticle(particle);
                     ActiveParticles.Last.Value.Update(SecPassed);
                 }
                 SecPassed -= NextSpawnIn;
