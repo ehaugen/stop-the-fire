@@ -71,6 +71,8 @@ namespace StopTheFire
         //bool isQuadTreeCollisionDetectionEnabled = false; 
         //KeyboardState prevKeyboardState; 
 
+        List<int> spreadFireWindowIds = new List<int>();
+
 
         public Game1() : base()
         {
@@ -329,10 +331,10 @@ namespace StopTheFire
                     emitter.StartLife.X += .0001f;
                     emitter.StartLife.Y += .0001f;
                 }
-                else if (emitter.Parent.EmitterList.Count >= building.Windows.Count / 2)
-                {
-                    //end game
-                }
+                //else if (emitter.Parent.EmitterList.Count >= building.Windows.Count / 2)
+                //{
+                //    //end game
+                //}
                 else if (emitter.CanSpread)
                 {
                     //spread to a neighboring window if not already on fire
@@ -353,29 +355,59 @@ namespace StopTheFire
 
                     List<int> possibleWindowIds = new List<int>();
 
-                    //TODO: check to see if fire is already in window; if so, don't add to possibleWindowIds
-                    if (isTop == false) { possibleWindowIds.Add(emitter.MiscId.Value - 1); }
-                    if (isBottom == false) { possibleWindowIds.Add(emitter.MiscId.Value + 1); }
-                    if (isLeft == false) { possibleWindowIds.Add(emitter.MiscId.Value - Convert.ToInt32(building.Rows)); }
-                    if (isRight == false) { possibleWindowIds.Add(emitter.MiscId.Value + Convert.ToInt32(building.Rows)); }
+                    //Grab windowIds for every window already on fire
+                    var windowsOnFire = new List<int>();
+                    foreach (Emitter e in fireParticleSystem.EmitterList)
+                    {
+                        windowsOnFire.Add(e.MiscId.Value);
+                    }
 
-                    //randomly choose one of the possible window ids
-                    var rand = new Random();
-                    int index = rand.Next(possibleWindowIds.Count);
-                    spreadWindowId = possibleWindowIds[index];
+                    if (isTop == false) 
+                    {
+                        var windowId = emitter.MiscId.Value - 1;
+                        if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
+                        {
+                            possibleWindowIds.Add(windowId);
+                        }
+                    }
+                    if (isBottom == false) 
+                    {
+                        var windowId = emitter.MiscId.Value + 1;
+                        if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
+                        {
+                            possibleWindowIds.Add(windowId); 
+                        }
+                    }
+                    if (isLeft == false) 
+                    {
+                        var windowId = emitter.MiscId.Value - Convert.ToInt32(building.Rows);
+                        if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
+                        {
+                            possibleWindowIds.Add(windowId); 
+                        }
+                    }
+                    if (isRight == false) 
+                    {
+                        var windowId = emitter.MiscId.Value + Convert.ToInt32(building.Rows);
+                        if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
+                        {
+                            possibleWindowIds.Add(windowId);
+                        }
+                    }
 
-                    //spread the fire!
-                    spreadFire = true;
+                    //randomly choose one of the possible window ids, if any
+                    if (possibleWindowIds.Count > 0)
+                    {
+                        var rand = new Random();
+                        int index = rand.Next(possibleWindowIds.Count);
+                        spreadFireWindowIds.Add(possibleWindowIds[index]);
+                    }
                     emitter.CanSpread = false;
                 }
             }
 
-
-
-
-            if (spreadFire)
+            foreach(int windowId in spreadFireWindowIds)
             {
-
                 fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f),
                                         new Vector2(0, -1),
                                         new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi),
@@ -387,13 +419,13 @@ namespace StopTheFire
                                         new Vector2(400, 500),
                                         new Vector2(100, 120),
                                         1000,
-                                        building.Windows[spreadWindowId] + new Vector2(building.Window.Width / 2, building.Window.Height),
+                                        building.Windows[windowId] + new Vector2(building.Window.Width / 2, building.Window.Height),
                                         fireParticleBase,
                                         true,
                                         true,
-                                        spreadWindowId);
-                spreadFire = false;
+                                        windowId);
             }
+            spreadFireWindowIds.Clear();
 
         BreakForEach:
 
