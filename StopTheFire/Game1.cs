@@ -1,6 +1,7 @@
 ﻿#region Using Statements
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -164,40 +165,32 @@ namespace StopTheFire
                                                 ,true
                                                 ,false);
 
-            //fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f),
-            //                            new Vector2(0, -1), 
-            //                            new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi),
-            //                            fireHeight,
-            //                            new Vector2(12, 14), new Vector2(6, 7f),
-            //                            Color.Orange, Color.Gray, 
-            //                            new Color(Color.Orange, 0), 
-            //                            new Color(Color.Orange, 0),
-            //                            new Vector2(400, 500), 
-            //                            new Vector2(100, 120), 
-            //                            1000, 
-            //                            building.Windows[0]  + new Vector2(building.Window.Width/2,building.Window.Height), 
-            //                            fireParticleBase,
-            //                            true,
-            //                            true,
-            //                            0);
+            //random seed of fires
+            var rand = new Random();
+            var windowIds = Enumerable.Range(0, building.Windows.Count).OrderBy(x => rand.Next()).ToArray();
 
-            fireParticleSystem.AddEmitter(   new Vector2(0.001f, 0.0015f)
-                                            ,new Vector2(0, -1)
-                                            ,new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi)
-                                            ,fireHeight
-                                            ,new Vector2(12, 14)
-                                            ,new Vector2(6, 7f)
-                                            ,Color.Orange, Color.Gray
-                                            ,new Color(Color.Orange, 0)
-                                            ,new Color(Color.Orange, 0)
-                                            ,new Vector2(400, 500)
-                                            ,new Vector2(100, 120)
-                                            ,1000
-                                            ,building.Windows[4] + new Vector2(building.Window.Width / 2, building.Window.Height)
-                                            ,fireParticleBase
-                                            ,true
-                                            ,true
-                                            ,4);
+            //TODO: adjust numFires by difficulty, level, etc.
+            var numFires = 3; //number of starting fires
+            for(int i=0; i< numFires; i++)
+            {
+                fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
+                                                , new Vector2(0, -1)
+                                                , new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi)
+                                                , fireHeight
+                                                , new Vector2(12, 14)
+                                                , new Vector2(6, 7f)
+                                                , Color.Orange, Color.Gray
+                                                , new Color(Color.Orange, 0)
+                                                , new Color(Color.Orange, 0)
+                                                , new Vector2(400, 500)
+                                                , new Vector2(100, 120)
+                                                , 1000
+                                                , building.Windows[windowIds[i]] + new Vector2(building.Window.Width / 2, building.Window.Height)
+                                                , fireParticleBase
+                                                , true
+                                                , true
+                                                , windowIds[i]);
+            }
 
             //smokeParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f),
             //                            new Vector2(0, -1), new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi),
@@ -226,14 +219,14 @@ namespace StopTheFire
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            KeyboardState keyboardState = Keyboard.GetState();            
+            KeyboardState keyboardState = Keyboard.GetState();
 
             //To quit game
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
                 Exit();
 
             //Keyboard input to move truck
-            if(keyboardState.IsKeyDown(Keys.Left))
+            if (keyboardState.IsKeyDown(Keys.Left))
             {
                 if (truckPosition.X > 0)
                 {
@@ -269,7 +262,7 @@ namespace StopTheFire
             }
 
             //Keyboard input to spray water canon
-            if(keyboardState.IsKeyDown(Keys.Space))
+            if (keyboardState.IsKeyDown(Keys.Space))
             {
                 waterSprayParticleSystem.EmitterList[0].SpawnNew = true;
             }
@@ -288,7 +281,7 @@ namespace StopTheFire
             waterSprayParticleSystem.Position = waterSprayStartPosition;
             waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, ref RootQuadTree);
 
-            
+
 
             //smokeParticleSystem.Position = smokeStartPosition;
             //smokeParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, true);
@@ -296,81 +289,92 @@ namespace StopTheFire
             var spreadFire = false;
             int spreadWindowId = -1;
 
-            CollisionDetection();
+            //CollisionDetection();
 
-            //foreach (Emitter emitter in fireParticleSystem.EmitterList)
-            //{
-            //    foreach (Particle fireParticle in emitter.ActiveParticles)
-            //    {
-            //        foreach (Particle particle in waterSprayParticleSystem.EmitterList[0].ActiveParticles)
-            //        {
-            //            if (IsCollision(particle.Position.X, particle.Position.Y, particle.Radius, fireParticle.Position.X, fireParticle.Position.Y, fireParticle.Radius))
-            //            {
-            //                emitter.StartLife.X -= .000001f;
-            //                emitter.StartLife.Y -= .000001f;
-            //                //fireHeight.X -= .000001f;
-            //                //fireHeight.Y -= .000001f;
 
-            //                if (emitter.StartLife.X < .025f)
-            //                {
-            //                    emitter.SpawnNew = false;
-            //                    emitter.Clear();
-            //                    goto BreakForEach;
-            //                }
-            //            }
-            //        }
-            //    }
 
-            //    if (emitter.StartLife.X < fireHeightMax.X)
-            //    {
-            //        emitter.StartLife.X += .0001f;
-            //        emitter.StartLife.Y += .0001f;
-            //    }
-            //    else if (emitter.Parent.EmitterList.Count >= building.Windows.Count / 2)
-            //    {
-            //        //end game
-            //    }
-            //    else if (emitter.CanSpread)
-            //    {
-            //        //spread to a neighboring window if not already on fire
-            //        float topY = building.Windows[0].Y + building.Window.Height;
-            //        float bottomY = building.Windows[building.Windows.Count - 1].Y + building.Window.Height;
-            //        float leftX = building.Windows[0].X + building.Window.Width / 2;
-            //        float rightX = building.Windows[building.Windows.Count - 1].X + building.Window.Width / 2;
 
-            //        bool isTop = false;
-            //        bool isBottom = false;
-            //        bool isLeft = false; ;
-            //        bool isRight = false;
+            foreach (Emitter emitter in fireParticleSystem.EmitterList)
+            {
+                var windowPoint = building.Windows[emitter.MiscId.Value];
+                var windowWidthTenth = building.Window.Width / 10;
+                var window = new Rectangle(Convert.ToInt32(windowPoint.X + windowWidthTenth), Convert.ToInt32(windowPoint.Y), Convert.ToInt32(building.Window.Width - (windowWidthTenth * 2)), Convert.ToInt32(building.Window.Height));
 
-            //        if (emitter.RelPosition.X.Equals(leftX)) { isLeft = true; }
-            //        if (emitter.RelPosition.X.Equals(rightX)) { isRight = true; }
-            //        if (emitter.RelPosition.Y.Equals(topY)) { isTop = true; }
-            //        if (emitter.RelPosition.Y.Equals(bottomY)) { isBottom = true; }
+                foreach (Particle particle in waterSprayParticleSystem.EmitterList[0].ActiveParticles)
+                {
+                    if (particle.BoundingBox.Intersects(window))
+                    {
+                        emitter.StartLife.X -= .00005f;
+                        emitter.StartLife.Y -= .00005f;
+                        //fireHeight.X -= .000001f;
+                        //fireHeight.Y -= .000001f;
 
-            //        List<int> possibleWindowIds = new List<int>();
+                        particle.Kill = true;
 
-            //        //TODO: check to see if fire is already in window; if so, don't add to possibleWindowIds
-            //        if (isTop == false) { possibleWindowIds.Add(emitter.MiscId.Value - 1); }
-            //        if (isBottom == false) { possibleWindowIds.Add(emitter.MiscId.Value + 1); }
-            //        if (isLeft == false) { possibleWindowIds.Add(emitter.MiscId.Value - Convert.ToInt32(building.Rows)); }
-            //        if (isRight == false) { possibleWindowIds.Add(emitter.MiscId.Value + Convert.ToInt32(building.Rows)); }
+                        if (emitter.StartLife.X < .025f)
+                        {
+                            emitter.SpawnNew = false;
+                            emitter.Clear();
+                            goto BreakForEach;
+                        }
+                    }
+                }
 
-            //        //randomly choose one of the possible window ids
-            //        var rand = new Random();
-            //        int index = rand.Next(possibleWindowIds.Count);
-            //        spreadWindowId = possibleWindowIds[index];
 
-            //        //spread the fire!
-            //        spreadFire = true;
-            //        emitter.CanSpread = false;
+                if (emitter.StartLife.X < fireHeightMax.X)
+                {
+                    emitter.StartLife.X += .0001f;
+                    emitter.StartLife.Y += .0001f;
 
-            //    }s
-            //}
+                    emitter.CanSpread = true; //if the fire ever goes below max height, then water was sprayed on it and it can spread again
+                }
+                else if (emitter.Parent.EmitterList.Count >= building.Windows.Count / 2)
+                {
+                    //end game
+                }
+                else if (emitter.CanSpread)
+                {
+                    //spread to a neighboring window if not already on fire
+                    float topY = building.Windows[0].Y + building.Window.Height;
+                    float bottomY = building.Windows[building.Windows.Count - 1].Y + building.Window.Height;
+                    float leftX = building.Windows[0].X + building.Window.Width / 2;
+                    float rightX = building.Windows[building.Windows.Count - 1].X + building.Window.Width / 2;
+
+                    bool isTop = false;
+                    bool isBottom = false;
+                    bool isLeft = false; ;
+                    bool isRight = false;
+
+                    if (emitter.RelPosition.X.Equals(leftX)) { isLeft = true; }
+                    if (emitter.RelPosition.X.Equals(rightX)) { isRight = true; }
+                    if (emitter.RelPosition.Y.Equals(topY)) { isTop = true; }
+                    if (emitter.RelPosition.Y.Equals(bottomY)) { isBottom = true; }
+
+                    List<int> possibleWindowIds = new List<int>();
+
+                    //TODO: check to see if fire is already in window; if so, don't add to possibleWindowIds
+                    if (isTop == false) { possibleWindowIds.Add(emitter.MiscId.Value - 1); }
+                    if (isBottom == false) { possibleWindowIds.Add(emitter.MiscId.Value + 1); }
+                    if (isLeft == false) { possibleWindowIds.Add(emitter.MiscId.Value - Convert.ToInt32(building.Rows)); }
+                    if (isRight == false) { possibleWindowIds.Add(emitter.MiscId.Value + Convert.ToInt32(building.Rows)); }
+
+                    //randomly choose one of the possible window ids
+                    var rand = new Random();
+                    int index = rand.Next(possibleWindowIds.Count);
+                    spreadWindowId = possibleWindowIds[index];
+
+                    //spread the fire!
+                    spreadFire = true;
+                    emitter.CanSpread = false;
+                }
+            }
+
+
+
 
             if (spreadFire)
             {
-                
+
                 fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f),
                                         new Vector2(0, -1),
                                         new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi),
@@ -392,84 +396,83 @@ namespace StopTheFire
 
             fireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, ref RootQuadTree);
 
-            //BreakForEach:
+        BreakForEach:
 
             base.Update(gameTime);
-        }        
+        }   
 
-        List<QuadTree> leavesInsideFrustum;
+        //List<QuadTree> leavesInsideFrustum;
 
-        void CollisionDetection()
-        {
-            collisionCount = 0;
+        //void CollisionDetection()
+        //{
+        //    collisionCount = 0;
 
-            leavesInsideFrustum = RootQuadTree.GetLeavesInsideFrustrum(new BoundingFrustum(Matrix.Identity));
+        //    leavesInsideFrustum = RootQuadTree.GetLeavesInsideFrustrum(new BoundingFrustum(Matrix.Identity));
 
-            foreach (QuadTree leaf in leavesInsideFrustum)
-            {
-                CollisionDetection(leaf.Particles);
-            }
+        //    foreach (QuadTree leaf in leavesInsideFrustum)
+        //    {
+        //        CollisionDetection(leaf.Particles);
+        //    }
 
-        }
+        //}
 
-        void CollisionDetection(List<Particle> particles)
-        {
-            int count = particles.Count;
-            Particle particle1, particle2;
+        //void CollisionDetection(List<Particle> particles)
+        //{
+        //    int count = particles.Count;
+        //    Particle particle1, particle2;
 
-            for (int i = 0; i < count; i++)
-            {
-                particle1 = particles[i];
+        //    for (int i = 0; i < count; i++)
+        //    {
+        //        particle1 = particles[i];
                 
-                for (int j = i + 1; j < count; j++)
-                {
-                    particle2 = particles[j];
+        //        for (int j = i + 1; j < count; j++)
+        //        {
+        //            particle2 = particles[j];
 
-                    //TODO: Checking particle ParentId should be sufficient since particles from different fire emitters should never cross--
-                    //if that ever becomes possible, the following will fail, so should be updated to account for that at some point
-                    if (!particle1.ParentId.Equals(particle2.ParentId) && particle1.BoundingBox.Intersects(particle2.BoundingBox))
-                    {
-                        Particle fireParticle, waterParticle;
+        //            //TODO: Checking particle ParentId should be sufficient since particles from different fire emitters should never cross--
+        //            //if that ever becomes possible, the following will fail, so should be updated to account for that at some point
+        //            if (!particle1.ParentId.Equals(particle2.ParentId) && particle1.BoundingBox.Intersects(particle2.BoundingBox))
+        //            {
+        //                Particle fireParticle, waterParticle;
 
-                        //determine water particle
-                        if (particle1.Parent.Type.Equals("WATER"))
-                        {
-                            waterParticle = particle1;
-                            fireParticle = particle2;
-                        }
-                        else
-                        {
-                            fireParticle = particle1;
-                            waterParticle = particle2;
-                        }
+        //                //determine water particle
+        //                if (particle1.Parent.Type.Equals("WATER"))
+        //                {
+        //                    waterParticle = particle1;
+        //                    fireParticle = particle2;
+        //                }
+        //                else
+        //                {
+        //                    fireParticle = particle1;
+        //                    waterParticle = particle2;
+        //                }
                             
-                        //shrink fire
-                        foreach(Emitter emitter in fireParticleSystem.EmitterList)
-                        {
-                            if (emitter.MiscId.Equals(fireParticle.ParentId))
-                            {
-                                emitter.StartLife.X -= .000001f;
-                                emitter.StartLife.Y -= .000001f;
+        //                //shrink fire
+        //                foreach(Emitter emitter in fireParticleSystem.EmitterList)
+        //                {
+        //                    if (emitter.MiscId.Equals(fireParticle.ParentId))
+        //                    {
+        //                        emitter.StartLife.X -= .000001f;
+        //                        emitter.StartLife.Y -= .000001f;
 
-                                if (emitter.StartLife.X < .025f)
-                                {
-                                    emitter.SpawnNew = false;
-                                    emitter.Clear();
-                                }
+        //                        if (emitter.StartLife.X < .025f)
+        //                        {
+        //                            emitter.SpawnNew = false;
+        //                            emitter.Clear();
+        //                        }
 
-                                break;
-                            }
-                        }
+        //                        break;
+        //                    }
+        //                }
 
-                        //remove particles
-                        particles.Remove(particle1);
-                        particles.Remove(particle2);
+        //                //remove particles
+        //                particles.Remove(particle1);
+        //                particles.Remove(particle2);
 
-                        ++collisionCount;
-                    }
-                }
-            }
-        } 
+        //                ++collisionCount;
+        //            }
+        //        }
+        //  } 
 
         /// <summary>
         /// This is called when the game should draw itself.

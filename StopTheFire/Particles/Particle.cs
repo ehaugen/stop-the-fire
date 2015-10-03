@@ -10,6 +10,8 @@ namespace StopTheFire.Particles
         public Vector2 Position { get; set; }
         public Vector2 Velocity { get; set; }
         public Rectangle BoundingBox{ get; set; }
+
+        public bool Kill { get; set; }
         
         Vector2 StartDirection;
         Vector2 EndDirection;
@@ -40,7 +42,7 @@ namespace StopTheFire.Particles
             this.Parent = parent;
             if(parent.MiscId != null)
                 this.ParentId = parent.MiscId.Value;
-
+            Kill = false;
         }
 
         public bool Update(float dt)

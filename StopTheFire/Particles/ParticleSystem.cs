@@ -29,20 +29,29 @@ namespace StopTheFire.Particles
 
         public void Update(float dt, ref QuadTree qt)
         {
+            int emitterIdToKill = -1;
+
             for (int i = 0; i < EmitterList.Count; i++)
             {
+                                
                 if (EmitterList[i].Budget > 0)
                 {
                     EmitterList[i].Update(dt, ref qt);
                 }
+
+                if (EmitterList[i].Kill)
+                    emitterIdToKill = i;
             }
+
+            if(emitterIdToKill > -1 && emitterIdToKill < EmitterList.Count)
+                EmitterList.Remove(EmitterList[emitterIdToKill]);
         }
 
         public void Draw(SpriteBatch spriteBatch, int Scale, Vector2 Offset)
         {
             for (int i = 0; i < EmitterList.Count; i++)
             {
-                if (EmitterList[i].Budget > 0)
+                if (EmitterList[i].Budget > 0 && !EmitterList[i].Kill)
                 {
                     EmitterList[i].Draw(spriteBatch, Scale, Offset);
                 }

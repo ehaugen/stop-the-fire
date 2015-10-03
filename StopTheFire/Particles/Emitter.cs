@@ -31,7 +31,8 @@ namespace StopTheFire.Particles
         public bool SpawnNew;
         public int? MiscId;
         public bool CanSpread;
-        public string Type;        
+        public string Type;
+        public bool Kill = false;
 
         public ParticleSystem Parent;
         
@@ -119,6 +120,8 @@ namespace StopTheFire.Particles
             while (node != null)
             {
                 bool isAlive = node.Value.Update(dt);
+                if (node.Value.Kill)
+                    isAlive = false;
                 node = node.Next;
                 if (!isAlive)
                 {
@@ -147,6 +150,7 @@ namespace StopTheFire.Particles
         public void Clear()
         {
             ActiveParticles.Clear();
+            Kill = true;
         }
 
     }
