@@ -63,10 +63,11 @@ namespace StopTheFire
         public QuadTree RootQuadTree; 
         List<Particle> particles; 
         Random rand; 
+        int cycle = 0;
         //float maxActorSpeed = 100f; 
         //int actorSpriteSize = 8; 
         //FrameRateCounter fps; 
-        int collisionCount; 
+        //int collisionCount; 
         //bool isQuadTreeCollisionDetectionEnabled = false; 
         //KeyboardState prevKeyboardState; 
 
@@ -170,7 +171,7 @@ namespace StopTheFire
             var windowIds = Enumerable.Range(0, building.Windows.Count).OrderBy(x => rand.Next()).ToArray();
 
             //TODO: adjust numFires by difficulty, level, etc.
-            var numFires = 3; //number of starting fires
+            var numFires = 4; //number of starting fires
             for(int i=0; i< numFires; i++)
             {
                 fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
@@ -309,6 +310,8 @@ namespace StopTheFire
                         //fireHeight.X -= .000001f;
                         //fireHeight.Y -= .000001f;
 
+                        emitter.CanSpread = true; //if the fire ever goes below max height, then water was sprayed on it and it can spread again
+
                         particle.Kill = true;
 
                         if (emitter.StartLife.X < .025f)
@@ -325,8 +328,6 @@ namespace StopTheFire
                 {
                     emitter.StartLife.X += .0001f;
                     emitter.StartLife.Y += .0001f;
-
-                    emitter.CanSpread = true; //if the fire ever goes below max height, then water was sprayed on it and it can spread again
                 }
                 else if (emitter.Parent.EmitterList.Count >= building.Windows.Count / 2)
                 {
@@ -394,12 +395,12 @@ namespace StopTheFire
                 spreadFire = false;
             }
 
-            fireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, ref RootQuadTree);
-
         BreakForEach:
 
+            fireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, ref RootQuadTree);
+
             base.Update(gameTime);
-        }   
+        }
 
         //List<QuadTree> leavesInsideFrustum;
 
