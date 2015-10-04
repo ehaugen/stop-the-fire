@@ -31,6 +31,7 @@ namespace StopTheFire.Particles
         public bool SpawnNew;
         public int? MiscId;
         public bool CanSpread;
+        public int? SpreadCounter;
         public string Type;
         public bool Kill = false;
 

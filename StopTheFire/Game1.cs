@@ -299,7 +299,7 @@ namespace StopTheFire
                 //else if (emitter.Parent.EmitterList.Count >= building.Windows.Count / 2)
                 //{
                 //    //end game
-                //}
+                //}                
                 else if (emitter.CanSpread)
                 {
                     //spread to a neighboring window if not already on fire
@@ -368,6 +368,21 @@ namespace StopTheFire
                         spreadFireWindowIds.Add(possibleWindowIds[index]);
                     }
                     emitter.CanSpread = false;
+                }
+                else
+                {
+                    if(emitter.SpreadCounter == null)
+                        emitter.SpreadCounter = 0;
+
+                    if(emitter.SpreadCounter.Value > 1000)
+                    {
+                        emitter.CanSpread = true;
+                        emitter.SpreadCounter = null;
+                    }
+                    else
+                    {
+                        emitter.SpreadCounter++;
+                    }
                 }
             }
 
