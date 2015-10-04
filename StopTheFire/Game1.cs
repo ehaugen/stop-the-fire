@@ -158,7 +158,7 @@ namespace StopTheFire
             var windowIds = Enumerable.Range(0, building.Windows.Count).OrderBy(x => rand.Next()).ToArray();
 
             //TODO: adjust numFires by difficulty, level, etc.
-            var numFires = 4; //number of starting fires
+            var numFires = 3; //number of starting fires
             for(int i=0; i< numFires; i++)
             {
                 fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
@@ -212,6 +212,16 @@ namespace StopTheFire
             //To quit game
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
                 Exit();
+
+            if (fireParticleSystem.EmitterList.Count >= building.Windows.Count)
+            {
+                //Game over
+            }
+            else if(fireParticleSystem.EmitterList.Count.Equals(0))
+            {
+                //Next level
+            }
+
 
             //Keyboard input to move truck
             if (keyboardState.IsKeyDown(Keys.Left))
@@ -295,11 +305,7 @@ namespace StopTheFire
                 {
                     emitter.StartLife.X += .0001f;
                     emitter.StartLife.Y += .0001f;
-                }
-                //else if (emitter.Parent.EmitterList.Count >= building.Windows.Count / 2)
-                //{
-                //    //end game
-                //}                
+                }              
                 else if (emitter.CanSpread)
                 {
                     //spread to a neighboring window if not already on fire
