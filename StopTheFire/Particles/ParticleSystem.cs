@@ -27,7 +27,7 @@ namespace StopTheFire.Particles
             EmitterList = new List<Emitter>();
         }
 
-        public void Update(float dt, ref QuadTree qt)
+        public void Update(float dt)
         {
             int emitterIdToKill = -1;
 
@@ -36,7 +36,7 @@ namespace StopTheFire.Particles
                                 
                 if (EmitterList[i].Budget > 0)
                 {
-                    EmitterList[i].Update(dt, ref qt);
+                    EmitterList[i].Update(dt);
                 }
 
                 if (EmitterList[i].Kill)

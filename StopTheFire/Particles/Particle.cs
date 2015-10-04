@@ -55,9 +55,6 @@ namespace StopTheFire.Particles
             Vector2 prevPos = Position;
 
             Position += MathLib.LinearInterpolate(EndDirection, StartDirection, lifePhase) * dt;
-
-            QuadTree prevNode = Game1.Instance.RootQuadTree.FindLeaf(new Vector3(prevPos,0));
-            Game1.Instance.RootQuadTree.ParticleMoved(this, prevNode);
             
             return true;
         }

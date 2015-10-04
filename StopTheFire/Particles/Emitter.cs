@@ -84,7 +84,7 @@ namespace StopTheFire.Particles
             if (miscId != null) { MiscId = miscId.Value; }
         }
 
-        public void Update(float dt, ref QuadTree qt)
+        public void Update(float dt)
         {
             SecPassed += dt;
             while (SecPassed > NextSpawnIn)
@@ -109,7 +109,6 @@ namespace StopTheFire.Particles
                         this);
                     
                     ActiveParticles.AddLast(particle);
-                    qt.AddParticle(particle);
                     ActiveParticles.Last.Value.Update(SecPassed);
                 }
                 SecPassed -= NextSpawnIn;

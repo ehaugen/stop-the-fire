@@ -57,22 +57,12 @@ namespace StopTheFire
         //Vector2 smokeHeightMax;
         //Vector2 smokeHeightStart;
 
-
         public static Game1 Instance; 
-        public Vector3 MapSize; 
-        public QuadTree RootQuadTree; 
+        public Vector3 MapSize;
         List<Particle> particles; 
-        Random rand; 
-        int cycle = 0;
-        //float maxActorSpeed = 100f; 
-        //int actorSpriteSize = 8; 
-        //FrameRateCounter fps; 
-        //int collisionCount; 
-        //bool isQuadTreeCollisionDetectionEnabled = false; 
         //KeyboardState prevKeyboardState; 
 
         List<int> spreadFireWindowIds = new List<int>();
-
 
         public Game1() : base()
         {
@@ -87,8 +77,6 @@ namespace StopTheFire
             //Window.AllowUserResizing = true;
             graphics.PreferredBackBufferWidth = 800;
             graphics.PreferredBackBufferHeight = 480;
-
-            rand = new Random(); 
         }
 
         /// <summary>
@@ -103,9 +91,6 @@ namespace StopTheFire
             MapSize = new Vector3(viewport.Width, viewport.Height, 0);
 
             particles = new List<Particle>();
-
-            RootQuadTree = new QuadTree(Vector3.Zero, MapSize);
-            //fps = new FrameRateCounter(); 
 
             buildingPosition = new Vector2(350, 120);                  
             truckPosition = new Vector2(400, 400);
@@ -274,27 +259,11 @@ namespace StopTheFire
                 waterSprayParticleSystem.EmitterList[0].SpawnNew = false;
             }
 
-            //if(fireHeight.X < .025f)
-            //{
-            //    spawnNewFireParticle = false;
-            //    fireParticleSystem.Clear();
-            //}
-
-
             waterSprayParticleSystem.Position = waterSprayStartPosition;
-            waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, ref RootQuadTree);
-
-
+            waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
 
             //smokeParticleSystem.Position = smokeStartPosition;
             //smokeParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, true);
-
-            var spreadFire = false;
-            int spreadWindowId = -1;
-
-            //CollisionDetection();
-
-
 
 
             foreach (Emitter emitter in fireParticleSystem.EmitterList)
@@ -309,10 +278,6 @@ namespace StopTheFire
                     {
                         emitter.StartLife.X -= .00005f;
                         emitter.StartLife.Y -= .00005f;
-                        //fireHeight.X -= .000001f;
-                        //fireHeight.Y -= .000001f;
-
-                        emitter.CanSpread = true; //if the fire ever goes below max height, then water was sprayed on it and it can spread again
 
                         particle.Kill = true;
 
@@ -429,83 +394,10 @@ namespace StopTheFire
 
         BreakForEach:
 
-            fireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, ref RootQuadTree);
+            fireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
 
             base.Update(gameTime);
         }
-
-        //List<QuadTree> leavesInsideFrustum;
-
-        //void CollisionDetection()
-        //{
-        //    collisionCount = 0;
-
-        //    leavesInsideFrustum = RootQuadTree.GetLeavesInsideFrustrum(new BoundingFrustum(Matrix.Identity));
-
-        //    foreach (QuadTree leaf in leavesInsideFrustum)
-        //    {
-        //        CollisionDetection(leaf.Particles);
-        //    }
-
-        //}
-
-        //void CollisionDetection(List<Particle> particles)
-        //{
-        //    int count = particles.Count;
-        //    Particle particle1, particle2;
-
-        //    for (int i = 0; i < count; i++)
-        //    {
-        //        particle1 = particles[i];
-                
-        //        for (int j = i + 1; j < count; j++)
-        //        {
-        //            particle2 = particles[j];
-
-        //            //TODO: Checking particle ParentId should be sufficient since particles from different fire emitters should never cross--
-        //            //if that ever becomes possible, the following will fail, so should be updated to account for that at some point
-        //            if (!particle1.ParentId.Equals(particle2.ParentId) && particle1.BoundingBox.Intersects(particle2.BoundingBox))
-        //            {
-        //                Particle fireParticle, waterParticle;
-
-        //                //determine water particle
-        //                if (particle1.Parent.Type.Equals("WATER"))
-        //                {
-        //                    waterParticle = particle1;
-        //                    fireParticle = particle2;
-        //                }
-        //                else
-        //                {
-        //                    fireParticle = particle1;
-        //                    waterParticle = particle2;
-        //                }
-                            
-        //                //shrink fire
-        //                foreach(Emitter emitter in fireParticleSystem.EmitterList)
-        //                {
-        //                    if (emitter.MiscId.Equals(fireParticle.ParentId))
-        //                    {
-        //                        emitter.StartLife.X -= .000001f;
-        //                        emitter.StartLife.Y -= .000001f;
-
-        //                        if (emitter.StartLife.X < .025f)
-        //                        {
-        //                            emitter.SpawnNew = false;
-        //                            emitter.Clear();
-        //                        }
-
-        //                        break;
-        //                    }
-        //                }
-
-        //                //remove particles
-        //                particles.Remove(particle1);
-        //                particles.Remove(particle2);
-
-        //                ++collisionCount;
-        //            }
-        //        }
-        //  } 
 
         /// <summary>
         /// This is called when the game should draw itself.
