@@ -263,6 +263,9 @@ namespace StopTheFire
                 //calculate score once
                 if (!gameState.Equals(GameState.LevelComplete))
                 {
+                    waterSprayParticleSystem.Clear();
+                    waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
+
                     previousScore = scoreTotal;
 
                     if (timeThreshold > timer)
