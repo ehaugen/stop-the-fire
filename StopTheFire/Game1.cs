@@ -30,11 +30,14 @@ namespace StopTheFire
         //Fonts
         SpriteFont gameOverFont;
         SpriteFont instructionsFont;
-        SpriteFont scoreFont;  
+        SpriteFont scoreFont;
+        SpriteFont timerFont;
 
         Texture2D background;
 
         int score;
+        int timer;
+        int counter;
 
         //Texture2D building;
         Vector2 buildingPosition;
@@ -129,6 +132,7 @@ namespace StopTheFire
             gameOverFont = Content.Load<SpriteFont>("Fonts/GameOver");
             instructionsFont = Content.Load<SpriteFont>("Fonts/Instructions");
             scoreFont = Content.Load<SpriteFont>("Fonts/Score");
+            timerFont = Content.Load<SpriteFont>("Fonts/Timer");
 
             ResetStartConditions();
         }
@@ -146,12 +150,14 @@ namespace StopTheFire
         private void ResetStartConditions()
         {
             score = 0;
+            timer = 0;
+            counter = 0;
 
             buildingPosition = new Vector2(350, 120);
             truckPosition = new Vector2(350, 400);
             truckVelocity = new Vector2(100f, 0);
 
-            waterSprayStartPosition = new Vector2(476, 407);
+            waterSprayStartPosition = new Vector2(426, 407);
             waterSprayParticleSystem = new ParticleSystem(waterSprayStartPosition, "WATER");
             waterSprayDistance = waterSprayDistanceMin = new Vector2(0.25f, 0.375f);
             waterSprayDistanceMax = new Vector2(0.75f, 1.25f);
@@ -302,6 +308,13 @@ namespace StopTheFire
 
                 //smokeParticleSystem.Position = smokeStartPosition;
                 //smokeParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, true);
+
+                counter++;
+                if (counter.Equals(60))
+                {
+                    timer++;
+                    counter = 0;
+                }
             }
 
             foreach (Emitter emitter in fireParticleSystem.EmitterList)
@@ -459,6 +472,7 @@ namespace StopTheFire
             spriteBatch.Begin();
             spriteBatch.Draw(background, new Rectangle(0, 0, 800, 480), Color.White);
             spriteBatch.DrawString(scoreFont, "Score: " + score.ToString(), new Vector2(10, 10), Color.White);
+            spriteBatch.DrawString(timerFont, "Time: " + timer.ToString(), new Vector2(400, 10), Color.White);
             spriteBatch.End();
 
             building.Draw(spriteBatch);
