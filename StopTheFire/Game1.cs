@@ -19,7 +19,7 @@ namespace StopTheFire
     /// </summary>
     public class Game1 : Game
     {
-        private enum GameState { Loading, Running, GameOver }
+        private enum GameState { Loading, Running, LevelComplete, GameOver }
 
 
         GraphicsDeviceManager graphics;
@@ -32,12 +32,16 @@ namespace StopTheFire
         SpriteFont instructionsFont;
         SpriteFont scoreFont;
         SpriteFont timerFont;
+        SpriteFont statusFont;
 
         Texture2D background;
 
-        int score;
+        int scoreTotal;
+        int scoreLevel;
+        int previousScore;
         int timer;
         int counter;
+        int timeThreshold;
 
         //Texture2D building;
         Vector2 buildingPosition;
@@ -133,6 +137,7 @@ namespace StopTheFire
             instructionsFont = Content.Load<SpriteFont>("Fonts/Instructions");
             scoreFont = Content.Load<SpriteFont>("Fonts/Score");
             timerFont = Content.Load<SpriteFont>("Fonts/Timer");
+            statusFont = Content.Load<SpriteFont>("Fonts/Status");
 
             ResetStartConditions();
         }
@@ -149,9 +154,12 @@ namespace StopTheFire
 
         private void ResetStartConditions()
         {
-            score = 0;
+            scoreTotal = 0;
+            scoreLevel = 0;
+            previousScore = 0;
             timer = 0;
             counter = 0;
+            timeThreshold = 60;
 
             buildingPosition = new Vector2(350, 120);
             truckPosition = new Vector2(350, 400);
@@ -198,7 +206,7 @@ namespace StopTheFire
             var windowIds = Enumerable.Range(0, building.Windows.Count).OrderBy(x => rand.Next()).ToArray();
 
             //TODO: adjust numFires by difficulty, level, etc.
-            var numFires = 5; //number of starting fires
+            var numFires = 2; //number of starting fires
             for (int i = 0; i < numFires; i++)
             {
                 fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
@@ -247,12 +255,28 @@ namespace StopTheFire
             {
                 gameState = GameState.GameOver;
 
-                if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.GetPressedKeys().Length > 0)
+                if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
                     ResetStartConditions();
             }
             else if (fireParticleSystem.EmitterList.Count.Equals(0))
-            {
-                //Next level
+            {                
+                //calculate score once
+                if (!gameState.Equals(GameState.LevelComplete))
+                {
+                    previousScore = scoreTotal;
+
+                    if (timeThreshold > timer)
+                        scoreLevel = timeThreshold - timer; //bonus
+                    scoreLevel += 10; //level complete
+
+                    gameState = GameState.LevelComplete;
+                }
+
+                if(scoreTotal < previousScore + scoreLevel)
+                    scoreTotal++;
+                else
+                    if(GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
+                        ResetStartConditions();
             }
 
             if (gameState.Equals(GameState.Running))
@@ -471,7 +495,7 @@ namespace StopTheFire
 
             spriteBatch.Begin();
             spriteBatch.Draw(background, new Rectangle(0, 0, 800, 480), Color.White);
-            spriteBatch.DrawString(scoreFont, "Score: " + score.ToString(), new Vector2(10, 10), Color.White);
+            spriteBatch.DrawString(scoreFont, "Score: " + scoreTotal.ToString(), new Vector2(10, 10), Color.White);
             spriteBatch.DrawString(timerFont, "Time: " + timer.ToString(), new Vector2(400, 10), Color.White);
             spriteBatch.End();
 
@@ -491,7 +515,16 @@ namespace StopTheFire
             {
                 spriteBatch.Begin();
                 spriteBatch.DrawString(gameOverFont, "Game Over!", new Vector2(200, 150), Color.OrangeRed);
-                spriteBatch.DrawString(instructionsFont, "Press any key to play again. (Press Esc to quit.)", new Vector2(200, 370), Color.White);
+                spriteBatch.DrawString(instructionsFont, "Press Enter to play again. (Press Esc to quit.)", new Vector2(200, 370), Color.White);
+                spriteBatch.End();
+            }
+
+            if(gameState.Equals(GameState.LevelComplete))
+            {
+                spriteBatch.Begin();
+                spriteBatch.DrawString(statusFont, "Level Complete!", new Vector2(250, 150), Color.Yellow);
+                if(scoreTotal.Equals(previousScore + scoreLevel))
+                    spriteBatch.DrawString(instructionsFont, "Press Enter to play again. (Press Esc to quit.)", new Vector2(200, 370), Color.White);                
                 spriteBatch.End();
             }
 
