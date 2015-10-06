@@ -19,10 +19,22 @@ namespace StopTheFire
     /// </summary>
     public class Game1 : Game
     {
+        private enum GameState { Loading, Running, GameOver }
+
+
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        GameState gameState;
+
+        //Fonts
+        SpriteFont gameOverFont;
+        SpriteFont instructionsFont;
+        SpriteFont scoreFont;  
+
         Texture2D background;
+
+        int score;
 
         //Texture2D building;
         Vector2 buildingPosition;
@@ -40,7 +52,7 @@ namespace StopTheFire
         Vector2 waterSprayDistance;
         Vector2 waterSprayDistanceMax;
         Vector2 waterSprayDistanceMin;
-        bool spawnNewParticle = false;
+        //bool spawnNewParticle = false;
 
         Texture2D fireParticleBase;
         ParticleSystem fireParticleSystem;
@@ -48,7 +60,7 @@ namespace StopTheFire
         Vector2 fireHeight;
         Vector2 fireHeightMax;
         Vector2 fireHeightStart;
-        bool spawnNewFireParticle = true;
+        //bool spawnNewFireParticle = true;
 
         //Texture2D smokeParticleBase;
         //ParticleSystem smokeParticleSystem;
@@ -59,13 +71,15 @@ namespace StopTheFire
 
         public static Game1 Instance; 
         public Vector3 MapSize;
-        List<Particle> particles; 
+        //List<Particle> particles; 
         //KeyboardState prevKeyboardState; 
 
         List<int> spreadFireWindowIds = new List<int>();
 
         public Game1() : base()
         {
+            gameState = GameState.Loading;
+
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
@@ -90,27 +104,6 @@ namespace StopTheFire
             Viewport viewport = GraphicsDevice.Viewport;
             MapSize = new Vector3(viewport.Width, viewport.Height, 0);
 
-            particles = new List<Particle>();
-
-            buildingPosition = new Vector2(350, 120);                  
-            truckPosition = new Vector2(400, 400);
-            truckVelocity = new Vector2(100f, 0);
-
-            waterSprayStartPosition = new Vector2(476, 407);            
-            waterSprayParticleSystem = new ParticleSystem(waterSprayStartPosition, "WATER");
-            waterSprayDistance = waterSprayDistanceMin = new Vector2(0.25f, 0.375f);
-            waterSprayDistanceMax = new Vector2(0.75f, 1.25f);
-
-            fireStartPosition = new Vector2(0,0);
-            fireParticleSystem = new ParticleSystem(fireStartPosition, "FIRE");
-            fireHeight = fireHeightStart = new Vector2(0.1f, 0.15f);
-            fireHeightMax = new Vector2(0.25f, 0.375f);
-
-            //smokeStartPosition = new Vector2(365, 205);
-            //smokeParticleSystem = new ParticleSystem(smokeStartPosition);
-            //smokeHeight = fireHeightStart = new Vector2(0.2f, 0.3f);
-            //smokeHeightMax = new Vector2(0.5f, 0.75f);            
-
             base.Initialize();
         }
 
@@ -133,33 +126,74 @@ namespace StopTheFire
             fireParticleBase = Content.Load<Texture2D>("Sprites/fire");
             //smokeParticleBase = Content.Load<Texture2D>("Sprites/fire");
 
+            gameOverFont = Content.Load<SpriteFont>("Fonts/GameOver");
+            instructionsFont = Content.Load<SpriteFont>("Fonts/Instructions");
+            scoreFont = Content.Load<SpriteFont>("Fonts/Score");
+
+            ResetStartConditions();
+        }
+
+        /// <summary>
+        /// UnloadContent will be called once per game and is the place to unload
+        /// all content.
+        /// </summary>
+        protected override void UnloadContent()
+        {
+            // TODO: Unload any non ContentManager content here
+            Content.Unload();
+        }       
+
+        private void ResetStartConditions()
+        {
+            score = 0;
+
+            buildingPosition = new Vector2(350, 120);
+            truckPosition = new Vector2(350, 400);
+            truckVelocity = new Vector2(100f, 0);
+
+            waterSprayStartPosition = new Vector2(476, 407);
+            waterSprayParticleSystem = new ParticleSystem(waterSprayStartPosition, "WATER");
+            waterSprayDistance = waterSprayDistanceMin = new Vector2(0.25f, 0.375f);
+            waterSprayDistanceMax = new Vector2(0.75f, 1.25f);
+
+            fireStartPosition = new Vector2(0, 0);
+            fireParticleSystem = new ParticleSystem(fireStartPosition, "FIRE");
+            fireHeight = fireHeightStart = new Vector2(0.1f, 0.15f);
+            fireHeightMax = new Vector2(0.25f, 0.375f);
+
+            //smokeStartPosition = new Vector2(365, 205);
+            //smokeParticleSystem = new ParticleSystem(smokeStartPosition);
+            //smokeHeight = fireHeightStart = new Vector2(0.2f, 0.3f);
+            //smokeHeightMax = new Vector2(0.5f, 0.75f);       
+
+
             building = new Building(buildingSwatch, buildingPosition, 250, 150, new Window(window, 1));
 
-            waterSprayParticleSystem.AddEmitter( new Vector2(0.001f, 0.0015f)
-                                                ,new Vector2(0, -1)
-                                                ,new Vector2(0.01f * MathHelper.Pi, 0.01f * -MathHelper.Pi)
-                                                ,waterSprayDistance
-                                                ,new Vector2(3, 4)
-                                                ,new Vector2(1, 1.5f)
-                                                ,Color.LightBlue
-                                                ,Color.White
-                                                ,new Color(Color.LightBlue, 0)
-                                                ,new Color(Color.LightBlue, 0)
-                                                ,new Vector2(400, 500)
-                                                ,new Vector2(100, 120)
-                                                ,1000
-                                                ,Vector2.Zero
-                                                ,waterSprayParticleBase
-                                                ,true
-                                                ,false);
+            waterSprayParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
+                                                , new Vector2(0, -1)
+                                                , new Vector2(0.01f * MathHelper.Pi, 0.01f * -MathHelper.Pi)
+                                                , waterSprayDistance
+                                                , new Vector2(3, 4)
+                                                , new Vector2(1, 1.5f)
+                                                , Color.LightBlue
+                                                , Color.White
+                                                , new Color(Color.LightBlue, 0)
+                                                , new Color(Color.LightBlue, 0)
+                                                , new Vector2(400, 500)
+                                                , new Vector2(100, 120)
+                                                , 1000
+                                                , Vector2.Zero
+                                                , waterSprayParticleBase
+                                                , true
+                                                , false);
 
             //random seed of fires
             var rand = new Random();
             var windowIds = Enumerable.Range(0, building.Windows.Count).OrderBy(x => rand.Next()).ToArray();
 
             //TODO: adjust numFires by difficulty, level, etc.
-            var numFires = 3; //number of starting fires
-            for(int i=0; i< numFires; i++)
+            var numFires = 5; //number of starting fires
+            for (int i = 0; i < numFires; i++)
             {
                 fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
                                                 , new Vector2(0, -1)
@@ -186,19 +220,9 @@ namespace StopTheFire
             //                            new Vector2(12, 14), new Vector2(6, 7f),
             //                            Color.White, Color.Gray, new Color(Color.Gray, 0), new Color(Color.Black, 0),
             //                            new Vector2(400, 500), new Vector2(100, 120), 1000, Vector2.Zero, smokeParticleBase);
-
-
+            
+            gameState = GameState.Running;
         }
-
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// all content.
-        /// </summary>
-        protected override void UnloadContent()
-        {
-            // TODO: Unload any non ContentManager content here
-            Content.Unload();
-        }       
 
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -215,66 +239,70 @@ namespace StopTheFire
 
             if (fireParticleSystem.EmitterList.Count >= building.Windows.Count)
             {
-                //Game over
+                gameState = GameState.GameOver;
+
+                if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.GetPressedKeys().Length > 0)
+                    ResetStartConditions();
             }
-            else if(fireParticleSystem.EmitterList.Count.Equals(0))
+            else if (fireParticleSystem.EmitterList.Count.Equals(0))
             {
                 //Next level
             }
 
-
-            //Keyboard input to move truck
-            if (keyboardState.IsKeyDown(Keys.Left))
+            if (gameState.Equals(GameState.Running))
             {
-                if (truckPosition.X > 0)
+                //Keyboard input to move truck
+                if (keyboardState.IsKeyDown(Keys.Left))
                 {
-                    truckPosition -= Vector2.Multiply(truckVelocity, (float)gameTime.ElapsedGameTime.TotalSeconds);
-                    waterSprayStartPosition -= Vector2.Multiply(truckVelocity, (float)gameTime.ElapsedGameTime.TotalSeconds);
+                    if (truckPosition.X > 0)
+                    {
+                        truckPosition -= Vector2.Multiply(truckVelocity, (float)gameTime.ElapsedGameTime.TotalSeconds);
+                        waterSprayStartPosition -= Vector2.Multiply(truckVelocity, (float)gameTime.ElapsedGameTime.TotalSeconds);
+                    }
                 }
-            }
-            else if (keyboardState.IsKeyDown(Keys.Right))
-            {
-                if (truckPosition.X < (graphics.PreferredBackBufferWidth - truck.Width))
+                else if (keyboardState.IsKeyDown(Keys.Right))
                 {
-                    truckPosition += Vector2.Multiply(truckVelocity, (float)gameTime.ElapsedGameTime.TotalSeconds);
-                    waterSprayStartPosition += Vector2.Multiply(truckVelocity, (float)gameTime.ElapsedGameTime.TotalSeconds);
+                    if (truckPosition.X < (graphics.PreferredBackBufferWidth - truck.Width))
+                    {
+                        truckPosition += Vector2.Multiply(truckVelocity, (float)gameTime.ElapsedGameTime.TotalSeconds);
+                        waterSprayStartPosition += Vector2.Multiply(truckVelocity, (float)gameTime.ElapsedGameTime.TotalSeconds);
+                    }
                 }
-            }
 
-            //Keyboard input to move water canon
-            if (keyboardState.IsKeyDown(Keys.Up))
-            {
-                if (waterSprayParticleSystem.EmitterList[0].StartLife.X < waterSprayDistanceMax.X && waterSprayParticleSystem.EmitterList[0].StartLife.Y < waterSprayDistanceMax.Y)
+                //Keyboard input to move water canon
+                if (keyboardState.IsKeyDown(Keys.Up))
                 {
-                    waterSprayParticleSystem.EmitterList[0].StartLife.X += 0.005f;
-                    waterSprayParticleSystem.EmitterList[0].StartLife.Y += 0.0075f;
+                    if (waterSprayParticleSystem.EmitterList[0].StartLife.X < waterSprayDistanceMax.X && waterSprayParticleSystem.EmitterList[0].StartLife.Y < waterSprayDistanceMax.Y)
+                    {
+                        waterSprayParticleSystem.EmitterList[0].StartLife.X += 0.005f;
+                        waterSprayParticleSystem.EmitterList[0].StartLife.Y += 0.0075f;
+                    }
                 }
-            }
-            else if (keyboardState.IsKeyDown(Keys.Down))
-            {
-                if (waterSprayParticleSystem.EmitterList[0].StartLife.X > waterSprayDistanceMin.X && waterSprayParticleSystem.EmitterList[0].StartLife.Y > waterSprayDistanceMin.Y)
+                else if (keyboardState.IsKeyDown(Keys.Down))
                 {
-                    waterSprayParticleSystem.EmitterList[0].StartLife.X -= 0.005f;
-                    waterSprayParticleSystem.EmitterList[0].StartLife.Y -= 0.0075f;
+                    if (waterSprayParticleSystem.EmitterList[0].StartLife.X > waterSprayDistanceMin.X && waterSprayParticleSystem.EmitterList[0].StartLife.Y > waterSprayDistanceMin.Y)
+                    {
+                        waterSprayParticleSystem.EmitterList[0].StartLife.X -= 0.005f;
+                        waterSprayParticleSystem.EmitterList[0].StartLife.Y -= 0.0075f;
+                    }
                 }
+
+                //Keyboard input to spray water canon
+                if (keyboardState.IsKeyDown(Keys.Space))
+                {
+                    waterSprayParticleSystem.EmitterList[0].SpawnNew = true;
+                }
+                else
+                {
+                    waterSprayParticleSystem.EmitterList[0].SpawnNew = false;
+                }
+
+                waterSprayParticleSystem.Position = waterSprayStartPosition;
+                waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
+
+                //smokeParticleSystem.Position = smokeStartPosition;
+                //smokeParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, true);
             }
-
-            //Keyboard input to spray water canon
-            if (keyboardState.IsKeyDown(Keys.Space))
-            {
-                waterSprayParticleSystem.EmitterList[0].SpawnNew = true;
-            }
-            else
-            {
-                waterSprayParticleSystem.EmitterList[0].SpawnNew = false;
-            }
-
-            waterSprayParticleSystem.Position = waterSprayStartPosition;
-            waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
-
-            //smokeParticleSystem.Position = smokeStartPosition;
-            //smokeParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f, true);
-
 
             foreach (Emitter emitter in fireParticleSystem.EmitterList)
             {
@@ -305,7 +333,7 @@ namespace StopTheFire
                 {
                     emitter.StartLife.X += .0001f;
                     emitter.StartLife.Y += .0001f;
-                }              
+                }
                 else if (emitter.CanSpread)
                 {
                     //spread to a neighboring window if not already on fire
@@ -333,7 +361,7 @@ namespace StopTheFire
                         windowsOnFire.Add(e.MiscId.Value);
                     }
 
-                    if (isTop == false) 
+                    if (isTop == false)
                     {
                         var windowId = emitter.MiscId.Value - 1;
                         if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
@@ -341,23 +369,23 @@ namespace StopTheFire
                             possibleWindowIds.Add(windowId);
                         }
                     }
-                    if (isBottom == false) 
+                    if (isBottom == false)
                     {
                         var windowId = emitter.MiscId.Value + 1;
                         if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
                         {
-                            possibleWindowIds.Add(windowId); 
+                            possibleWindowIds.Add(windowId);
                         }
                     }
-                    if (isLeft == false) 
+                    if (isLeft == false)
                     {
                         var windowId = emitter.MiscId.Value - Convert.ToInt32(building.Rows);
                         if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
                         {
-                            possibleWindowIds.Add(windowId); 
+                            possibleWindowIds.Add(windowId);
                         }
                     }
-                    if (isRight == false) 
+                    if (isRight == false)
                     {
                         var windowId = emitter.MiscId.Value + Convert.ToInt32(building.Rows);
                         if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
@@ -377,10 +405,10 @@ namespace StopTheFire
                 }
                 else
                 {
-                    if(emitter.SpreadCounter == null)
+                    if (emitter.SpreadCounter == null)
                         emitter.SpreadCounter = 0;
 
-                    if(emitter.SpreadCounter.Value > 1000)
+                    if (emitter.SpreadCounter.Value > 1000)
                     {
                         emitter.CanSpread = true;
                         emitter.SpreadCounter = null;
@@ -392,7 +420,7 @@ namespace StopTheFire
                 }
             }
 
-            foreach(int windowId in spreadFireWindowIds)
+            foreach (int windowId in spreadFireWindowIds)
             {
                 fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f),
                                         new Vector2(0, -1),
@@ -427,16 +455,16 @@ namespace StopTheFire
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            
+
             spriteBatch.Begin();
             spriteBatch.Draw(background, new Rectangle(0, 0, 800, 480), Color.White);
-            //spriteBatch.Draw(building, buildingPosition, Color.White);
+            spriteBatch.DrawString(scoreFont, "Score: " + score.ToString(), new Vector2(10, 10), Color.White);
             spriteBatch.End();
 
             building.Draw(spriteBatch);
 
             spriteBatch.Begin();
-            spriteBatch.Draw(truck, truckPosition, Color.White);            
+            spriteBatch.Draw(truck, truckPosition, Color.White);
             spriteBatch.End();
 
             spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
@@ -444,6 +472,14 @@ namespace StopTheFire
             fireParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
             waterSprayParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
             spriteBatch.End();
+
+            if (gameState.Equals(GameState.GameOver))
+            {
+                spriteBatch.Begin();
+                spriteBatch.DrawString(gameOverFont, "Game Over!", new Vector2(200, 150), Color.OrangeRed);
+                spriteBatch.DrawString(instructionsFont, "Press any key to play again. (Press Esc to quit.)", new Vector2(200, 370), Color.White);
+                spriteBatch.End();
+            }
 
             base.Draw(gameTime);
         }

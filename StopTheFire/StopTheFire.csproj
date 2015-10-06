@@ -38,7 +38,6 @@
     <Compile Include="Building.cs" />
     <Compile Include="Extensions\Extensions.cs" />
     <Compile Include="Game1.cs" />
-    <Compile Include="IActor.cs" />
     <Compile Include="Particles\Emitter.cs" />
     <Compile Include="Particles\MathLib.cs" />
     <Compile Include="Particles\Particle.cs" />
