@@ -38,7 +38,7 @@ namespace StopTheFire
 
         int scoreTotal;
         int scoreLevel;
-        int previousScore;
+        int scorePrevious;
         int timer;
         int counter;
         int timeThreshold;
@@ -76,10 +76,15 @@ namespace StopTheFire
         //Vector2 smokeHeightMax;
         //Vector2 smokeHeightStart;
 
+        LevelGenerator levelGenerator;
+        int level;
+
         public static Game1 Instance; 
         public Vector3 MapSize;
         //List<Particle> particles; 
         //KeyboardState prevKeyboardState; 
+
+
 
         List<int> spreadFireWindowIds = new List<int>();
 
@@ -140,6 +145,7 @@ namespace StopTheFire
             statusFont = Content.Load<SpriteFont>("Fonts/Status");
 
             ResetStartConditions();
+            BuildLevel();
         }
 
         /// <summary>
@@ -150,20 +156,48 @@ namespace StopTheFire
         {
             // TODO: Unload any non ContentManager content here
             Content.Unload();
-        }       
+        }    
 
         private void ResetStartConditions()
         {
+            ResetScore();
+            ResetCounters();
+            ResetTruck();
+            ResetParticleSystems();
+            level = 0;
+        }
+   
+        private void BuildLevel()
+        {
+            level++;
+
+            levelGenerator = new LevelGenerator(level, buildingSwatch, window, ref fireParticleSystem, fireHeight, fireParticleBase);
+
+            gameState = GameState.Running;
+        }
+
+        private void ResetScore()
+        {
             scoreTotal = 0;
+        }
+
+        private void ResetCounters()
+        {            
             scoreLevel = 0;
-            previousScore = 0;
+            scorePrevious = 0;
             timer = 0;
             counter = 0;
             timeThreshold = 60;
+        }
 
-            buildingPosition = new Vector2(350, 120);
+        private void ResetTruck()
+        {
             truckPosition = new Vector2(350, 400);
             truckVelocity = new Vector2(100f, 0);
+        }
+
+        private void ResetParticleSystems()
+        {          
 
             waterSprayStartPosition = new Vector2(426, 407);
             waterSprayParticleSystem = new ParticleSystem(waterSprayStartPosition, "WATER");
@@ -178,10 +212,7 @@ namespace StopTheFire
             //smokeStartPosition = new Vector2(365, 205);
             //smokeParticleSystem = new ParticleSystem(smokeStartPosition);
             //smokeHeight = fireHeightStart = new Vector2(0.2f, 0.3f);
-            //smokeHeightMax = new Vector2(0.5f, 0.75f);       
-
-
-            building = new Building(buildingSwatch, buildingPosition, 250, 150, new Window(window, 1));
+            //smokeHeightMax = new Vector2(0.5f, 0.75f);      
 
             waterSprayParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
                                                 , new Vector2(0, -1)
@@ -200,42 +231,7 @@ namespace StopTheFire
                                                 , waterSprayParticleBase
                                                 , true
                                                 , false);
-
-            //random seed of fires
-            var rand = new Random();
-            var windowIds = Enumerable.Range(0, building.Windows.Count).OrderBy(x => rand.Next()).ToArray();
-
-            //TODO: adjust numFires by difficulty, level, etc.
-            var numFires = 2; //number of starting fires
-            for (int i = 0; i < numFires; i++)
-            {
-                fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
-                                                , new Vector2(0, -1)
-                                                , new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi)
-                                                , fireHeight
-                                                , new Vector2(12, 14)
-                                                , new Vector2(6, 7f)
-                                                , Color.Orange, Color.Gray
-                                                , new Color(Color.Orange, 0)
-                                                , new Color(Color.Orange, 0)
-                                                , new Vector2(400, 500)
-                                                , new Vector2(100, 120)
-                                                , 1000
-                                                , building.Windows[windowIds[i]] + new Vector2(building.Window.Width / 2, building.Window.Height)
-                                                , fireParticleBase
-                                                , true
-                                                , true
-                                                , windowIds[i]);
-            }
-
-            //smokeParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f),
-            //                            new Vector2(0, -1), new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi),
-            //                            smokeHeight,
-            //                            new Vector2(12, 14), new Vector2(6, 7f),
-            //                            Color.White, Color.Gray, new Color(Color.Gray, 0), new Color(Color.Black, 0),
-            //                            new Vector2(400, 500), new Vector2(100, 120), 1000, Vector2.Zero, smokeParticleBase);
             
-            gameState = GameState.Running;
         }
 
         /// <summary>
@@ -251,14 +247,20 @@ namespace StopTheFire
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
                 Exit();
 
-            if (fireParticleSystem.EmitterList.Count >= building.Windows.Count)
+            foreach (Building building in levelGenerator.Buildings)
             {
-                gameState = GameState.GameOver;
+                if (fireParticleSystem.EmitterList.Count >= building.Windows.Count)
+                {
+                    gameState = GameState.GameOver;
 
-                if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
-                    ResetStartConditions();
+                    if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
+                        ResetStartConditions();
+
+                    break;
+                }
             }
-            else if (fireParticleSystem.EmitterList.Count.Equals(0))
+            
+            if (fireParticleSystem.EmitterList.Count.Equals(0))
             {                
                 //calculate score once
                 if (!gameState.Equals(GameState.LevelComplete))
@@ -266,7 +268,7 @@ namespace StopTheFire
                     waterSprayParticleSystem.Clear();
                     waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
 
-                    previousScore = scoreTotal;
+                    scorePrevious = scoreTotal;
 
                     if (timeThreshold > timer)
                         scoreLevel = timeThreshold - timer; //bonus
@@ -275,7 +277,7 @@ namespace StopTheFire
                     gameState = GameState.LevelComplete;
                 }
 
-                if(scoreTotal < previousScore + scoreLevel)
+                if(scoreTotal < scorePrevious + scoreLevel)
                     scoreTotal++;
                 else
                     if(GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
@@ -346,116 +348,119 @@ namespace StopTheFire
 
             foreach (Emitter emitter in fireParticleSystem.EmitterList)
             {
-                var windowPoint = building.Windows[emitter.MiscId.Value];
-                var windowWidthTenth = building.Window.Width / 10;
-                var window = new Rectangle(Convert.ToInt32(windowPoint.X + windowWidthTenth), Convert.ToInt32(windowPoint.Y), Convert.ToInt32(building.Window.Width - (windowWidthTenth * 2)), Convert.ToInt32(building.Window.Height));
-
-                foreach (Particle particle in waterSprayParticleSystem.EmitterList[0].ActiveParticles)
+                foreach (Building building in levelGenerator.Buildings)
                 {
-                    if (particle.BoundingBox.Intersects(window))
+                    var windowPoint = building.Windows[emitter.MiscId.Value];
+                    var windowWidthTenth = building.Window.Width / 10;
+                    var window = new Rectangle(Convert.ToInt32(windowPoint.X + windowWidthTenth), Convert.ToInt32(windowPoint.Y), Convert.ToInt32(building.Window.Width - (windowWidthTenth * 2)), Convert.ToInt32(building.Window.Height));
+
+                    foreach (Particle particle in waterSprayParticleSystem.EmitterList[0].ActiveParticles)
                     {
-                        emitter.StartLife.X -= .00005f;
-                        emitter.StartLife.Y -= .00005f;
-
-                        particle.Kill = true;
-
-                        if (emitter.StartLife.X < .025f)
+                        if (particle.BoundingBox.Intersects(window))
                         {
-                            emitter.SpawnNew = false;
-                            emitter.Clear();
-                            goto BreakForEach;
-                        }
-                    }
-                }
+                            emitter.StartLife.X -= .00005f;
+                            emitter.StartLife.Y -= .00005f;
 
+                            particle.Kill = true;
 
-                if (emitter.StartLife.X < fireHeightMax.X)
-                {
-                    emitter.StartLife.X += .0001f;
-                    emitter.StartLife.Y += .0001f;
-                }
-                else if (emitter.CanSpread)
-                {
-                    //spread to a neighboring window if not already on fire
-                    float topY = building.Windows[0].Y + building.Window.Height;
-                    float bottomY = building.Windows[building.Windows.Count - 1].Y + building.Window.Height;
-                    float leftX = building.Windows[0].X + building.Window.Width / 2;
-                    float rightX = building.Windows[building.Windows.Count - 1].X + building.Window.Width / 2;
-
-                    bool isTop = false;
-                    bool isBottom = false;
-                    bool isLeft = false; ;
-                    bool isRight = false;
-
-                    if (emitter.RelPosition.X.Equals(leftX)) { isLeft = true; }
-                    if (emitter.RelPosition.X.Equals(rightX)) { isRight = true; }
-                    if (emitter.RelPosition.Y.Equals(topY)) { isTop = true; }
-                    if (emitter.RelPosition.Y.Equals(bottomY)) { isBottom = true; }
-
-                    List<int> possibleWindowIds = new List<int>();
-
-                    //Grab windowIds for every window already on fire
-                    var windowsOnFire = new List<int>();
-                    foreach (Emitter e in fireParticleSystem.EmitterList)
-                    {
-                        windowsOnFire.Add(e.MiscId.Value);
-                    }
-
-                    if (isTop == false)
-                    {
-                        var windowId = emitter.MiscId.Value - 1;
-                        if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
-                        {
-                            possibleWindowIds.Add(windowId);
-                        }
-                    }
-                    if (isBottom == false)
-                    {
-                        var windowId = emitter.MiscId.Value + 1;
-                        if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
-                        {
-                            possibleWindowIds.Add(windowId);
-                        }
-                    }
-                    if (isLeft == false)
-                    {
-                        var windowId = emitter.MiscId.Value - Convert.ToInt32(building.Rows);
-                        if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
-                        {
-                            possibleWindowIds.Add(windowId);
-                        }
-                    }
-                    if (isRight == false)
-                    {
-                        var windowId = emitter.MiscId.Value + Convert.ToInt32(building.Rows);
-                        if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
-                        {
-                            possibleWindowIds.Add(windowId);
+                            if (emitter.StartLife.X < .025f)
+                            {
+                                emitter.SpawnNew = false;
+                                emitter.Clear();
+                                goto BreakForEach;
+                            }
                         }
                     }
 
-                    //randomly choose one of the possible window ids, if any
-                    if (possibleWindowIds.Count > 0)
-                    {
-                        var rand = new Random();
-                        int index = rand.Next(possibleWindowIds.Count);
-                        spreadFireWindowIds.Add(possibleWindowIds[index]);
-                    }
-                    emitter.CanSpread = false;
-                }
-                else
-                {
-                    if (emitter.SpreadCounter == null)
-                        emitter.SpreadCounter = 0;
 
-                    if (emitter.SpreadCounter.Value > 1000)
+                    if (emitter.StartLife.X < fireHeightMax.X)
                     {
-                        emitter.CanSpread = true;
-                        emitter.SpreadCounter = null;
+                        emitter.StartLife.X += .0001f;
+                        emitter.StartLife.Y += .0001f;
+                    }
+                    else if (emitter.CanSpread)
+                    {
+                        //spread to a neighboring window if not already on fire
+                        float topY = building.Windows[0].Y + building.Window.Height;
+                        float bottomY = building.Windows[building.Windows.Count - 1].Y + building.Window.Height;
+                        float leftX = building.Windows[0].X + building.Window.Width / 2;
+                        float rightX = building.Windows[building.Windows.Count - 1].X + building.Window.Width / 2;
+
+                        bool isTop = false;
+                        bool isBottom = false;
+                        bool isLeft = false; ;
+                        bool isRight = false;
+
+                        if (emitter.RelPosition.X.Equals(leftX)) { isLeft = true; }
+                        if (emitter.RelPosition.X.Equals(rightX)) { isRight = true; }
+                        if (emitter.RelPosition.Y.Equals(topY)) { isTop = true; }
+                        if (emitter.RelPosition.Y.Equals(bottomY)) { isBottom = true; }
+
+                        List<int> possibleWindowIds = new List<int>();
+
+                        //Grab windowIds for every window already on fire
+                        var windowsOnFire = new List<int>();
+                        foreach (Emitter e in fireParticleSystem.EmitterList)
+                        {
+                            windowsOnFire.Add(e.MiscId.Value);
+                        }
+
+                        if (isTop == false)
+                        {
+                            var windowId = emitter.MiscId.Value - 1;
+                            if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
+                            {
+                                possibleWindowIds.Add(windowId);
+                            }
+                        }
+                        if (isBottom == false)
+                        {
+                            var windowId = emitter.MiscId.Value + 1;
+                            if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
+                            {
+                                possibleWindowIds.Add(windowId);
+                            }
+                        }
+                        if (isLeft == false)
+                        {
+                            var windowId = emitter.MiscId.Value - Convert.ToInt32(building.Rows);
+                            if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
+                            {
+                                possibleWindowIds.Add(windowId);
+                            }
+                        }
+                        if (isRight == false)
+                        {
+                            var windowId = emitter.MiscId.Value + Convert.ToInt32(building.Rows);
+                            if (!windowsOnFire.Contains(windowId) && !spreadFireWindowIds.Contains(windowId))
+                            {
+                                possibleWindowIds.Add(windowId);
+                            }
+                        }
+
+                        //randomly choose one of the possible window ids, if any
+                        if (possibleWindowIds.Count > 0)
+                        {
+                            var rand = new Random();
+                            int index = rand.Next(possibleWindowIds.Count);
+                            spreadFireWindowIds.Add(possibleWindowIds[index]);
+                        }
+                        emitter.CanSpread = false;
                     }
                     else
                     {
-                        emitter.SpreadCounter++;
+                        if (emitter.SpreadCounter == null)
+                            emitter.SpreadCounter = 0;
+
+                        if (emitter.SpreadCounter.Value > 1000)
+                        {
+                            emitter.CanSpread = true;
+                            emitter.SpreadCounter = null;
+                        }
+                        else
+                        {
+                            emitter.SpreadCounter++;
+                        }
                     }
                 }
             }
@@ -502,7 +507,10 @@ namespace StopTheFire
             spriteBatch.DrawString(timerFont, "Time: " + timer.ToString(), new Vector2(400, 10), Color.White);
             spriteBatch.End();
 
-            building.Draw(spriteBatch);
+            foreach (Building building in levelGenerator.Buildings)
+            {
+                building.Draw(spriteBatch);
+            }
 
             spriteBatch.Begin();
             spriteBatch.Draw(truck, truckPosition, Color.White);
@@ -526,7 +534,7 @@ namespace StopTheFire
             {
                 spriteBatch.Begin();
                 spriteBatch.DrawString(statusFont, "Level Complete!", new Vector2(250, 150), Color.Yellow);
-                if(scoreTotal.Equals(previousScore + scoreLevel))
+                if(scoreTotal.Equals(scorePrevious + scoreLevel))
                     spriteBatch.DrawString(instructionsFont, "Press Enter to play again. (Press Esc to quit.)", new Vector2(200, 370), Color.White);                
                 spriteBatch.End();
             }
