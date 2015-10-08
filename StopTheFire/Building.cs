@@ -6,6 +6,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
+using StopTheFire.Particles;
+
 namespace StopTheFire
 {
     public class Building
@@ -18,9 +20,11 @@ namespace StopTheFire
         public Texture2D Tile { get; set; }
         public float Columns { get; set; }
         public float Rows { get; set; }
-        
+        public ParticleSystem FireParticleSystem { get; set; }
+        public Vector2 FireHeightMax { get; set; }
+        public Vector2 FireHeight { get; set; }
 
-        public Building(Texture2D tile, Vector2 position, int height, int width, Window window) 
+        public Building(Texture2D tile, Vector2 position, int width, int height, Window window) 
         {
             Tile = tile;
             Position = position;
@@ -49,8 +53,8 @@ namespace StopTheFire
             {
                 for(int j=1;j<=Rows;j++)
                 {
-                    x = (columnSpacing * i) - (window.Width/2) + Position.X * .89f;
-                    y = (rowSpacing * j) - (window.Height/2) + Position.Y * .6f;
+                    x = (columnSpacing * i) - (window.Width/2) + Position.X - columnSpacing/2;
+                    y = (rowSpacing * j) - (window.Height / 2) + Position.Y - rowSpacing/2;
                     Windows.Add(new Vector2(x, y));
                 }
             }

@@ -62,11 +62,11 @@ namespace StopTheFire
         //bool spawnNewParticle = false;
 
         Texture2D fireParticleBase;
-        ParticleSystem fireParticleSystem;
-        Vector2 fireStartPosition;
-        Vector2 fireHeight;
-        Vector2 fireHeightMax;
-        Vector2 fireHeightStart;
+        //ParticleSystem fireParticleSystem;
+        //Vector2 fireStartPosition;
+        //Vector2 fireHeight;
+        //Vector2 fireHeightMax;
+        //Vector2 fireHeightStart;
         //bool spawnNewFireParticle = true;
 
         //Texture2D smokeParticleBase;
@@ -164,14 +164,14 @@ namespace StopTheFire
             ResetCounters();
             ResetTruck();
             ResetParticleSystems();
-            level = 0;
+            level = 1;
         }
    
         private void BuildLevel()
         {
             level++;
 
-            levelGenerator = new LevelGenerator(level, buildingSwatch, window, ref fireParticleSystem, fireHeight, fireParticleBase);
+            levelGenerator = new LevelGenerator(level, buildingSwatch, window, fireParticleBase);
 
             gameState = GameState.Running;
         }
@@ -203,16 +203,6 @@ namespace StopTheFire
             waterSprayParticleSystem = new ParticleSystem(waterSprayStartPosition, "WATER");
             waterSprayDistance = waterSprayDistanceMin = new Vector2(0.25f, 0.375f);
             waterSprayDistanceMax = new Vector2(0.75f, 1.25f);
-
-            fireStartPosition = new Vector2(0, 0);
-            fireParticleSystem = new ParticleSystem(fireStartPosition, "FIRE");
-            fireHeight = fireHeightStart = new Vector2(0.1f, 0.15f);
-            fireHeightMax = new Vector2(0.25f, 0.375f);
-
-            //smokeStartPosition = new Vector2(365, 205);
-            //smokeParticleSystem = new ParticleSystem(smokeStartPosition);
-            //smokeHeight = fireHeightStart = new Vector2(0.2f, 0.3f);
-            //smokeHeightMax = new Vector2(0.5f, 0.75f);      
 
             waterSprayParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f)
                                                 , new Vector2(0, -1)
@@ -249,7 +239,7 @@ namespace StopTheFire
 
             foreach (Building building in levelGenerator.Buildings)
             {
-                if (fireParticleSystem.EmitterList.Count >= building.Windows.Count)
+                if (building.FireParticleSystem.EmitterList.Count >= building.Windows.Count)
                 {
                     gameState = GameState.GameOver;
 
@@ -258,30 +248,31 @@ namespace StopTheFire
 
                     break;
                 }
-            }
-            
-            if (fireParticleSystem.EmitterList.Count.Equals(0))
-            {                
-                //calculate score once
-                if (!gameState.Equals(GameState.LevelComplete))
+
+
+                if (building.FireParticleSystem.EmitterList.Count.Equals(0))
                 {
-                    waterSprayParticleSystem.Clear();
-                    waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
+                    //calculate score once
+                    if (!gameState.Equals(GameState.LevelComplete))
+                    {
+                        waterSprayParticleSystem.Clear();
+                        waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
 
-                    scorePrevious = scoreTotal;
+                        scorePrevious = scoreTotal;
 
-                    if (timeThreshold > timer)
-                        scoreLevel = timeThreshold - timer; //bonus
-                    scoreLevel += 10; //level complete
+                        if (timeThreshold > timer)
+                            scoreLevel = timeThreshold - timer; //bonus
+                        scoreLevel += 10; //level complete
 
-                    gameState = GameState.LevelComplete;
+                        gameState = GameState.LevelComplete;
+                    }
+
+                    if (scoreTotal < scorePrevious + scoreLevel)
+                        scoreTotal++;
+                    else
+                        if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
+                            ResetStartConditions();
                 }
-
-                if(scoreTotal < scorePrevious + scoreLevel)
-                    scoreTotal++;
-                else
-                    if(GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
-                        ResetStartConditions();
             }
 
             if (gameState.Equals(GameState.Running))
@@ -346,9 +337,11 @@ namespace StopTheFire
                 }
             }
 
-            foreach (Emitter emitter in fireParticleSystem.EmitterList)
+
+
+            foreach (Building building in levelGenerator.Buildings)
             {
-                foreach (Building building in levelGenerator.Buildings)
+                foreach (Emitter emitter in building.FireParticleSystem.EmitterList)
                 {
                     var windowPoint = building.Windows[emitter.MiscId.Value];
                     var windowWidthTenth = building.Window.Width / 10;
@@ -373,7 +366,7 @@ namespace StopTheFire
                     }
 
 
-                    if (emitter.StartLife.X < fireHeightMax.X)
+                    if (emitter.StartLife.X < building.FireHeightMax.X)
                     {
                         emitter.StartLife.X += .0001f;
                         emitter.StartLife.Y += .0001f;
@@ -400,7 +393,7 @@ namespace StopTheFire
 
                         //Grab windowIds for every window already on fire
                         var windowsOnFire = new List<int>();
-                        foreach (Emitter e in fireParticleSystem.EmitterList)
+                        foreach (Emitter e in building.FireParticleSystem.EmitterList)
                         {
                             windowsOnFire.Add(e.MiscId.Value);
                         }
@@ -463,32 +456,33 @@ namespace StopTheFire
                         }
                     }
                 }
+
+                foreach (int windowId in spreadFireWindowIds)
+                {
+                    building.FireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f),
+                                            new Vector2(0, -1),
+                                            new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi),
+                                            building.FireHeight,
+                                            new Vector2(12, 14), new Vector2(6, 7f),
+                                            Color.Orange, Color.Gray,
+                                            new Color(Color.Orange, 0),
+                                            new Color(Color.Orange, 0),
+                                            new Vector2(400, 500),
+                                            new Vector2(100, 120),
+                                            1000,
+                                            building.Windows[windowId] + new Vector2(building.Window.Width / 2, building.Window.Height),
+                                            fireParticleBase,
+                                            true,
+                                            true,
+                                            windowId);
+                }
+                spreadFireWindowIds.Clear();
+
+            BreakForEach:
+
+                building.FireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
             }
 
-            foreach (int windowId in spreadFireWindowIds)
-            {
-                fireParticleSystem.AddEmitter(new Vector2(0.001f, 0.0015f),
-                                        new Vector2(0, -1),
-                                        new Vector2(0.1f * MathHelper.Pi, 0.1f * -MathHelper.Pi),
-                                        fireHeight,
-                                        new Vector2(12, 14), new Vector2(6, 7f),
-                                        Color.Orange, Color.Gray,
-                                        new Color(Color.Orange, 0),
-                                        new Color(Color.Orange, 0),
-                                        new Vector2(400, 500),
-                                        new Vector2(100, 120),
-                                        1000,
-                                        building.Windows[windowId] + new Vector2(building.Window.Width / 2, building.Window.Height),
-                                        fireParticleBase,
-                                        true,
-                                        true,
-                                        windowId);
-            }
-            spreadFireWindowIds.Clear();
-
-        BreakForEach:
-
-            fireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
 
             base.Update(gameTime);
         }
@@ -506,19 +500,23 @@ namespace StopTheFire
             spriteBatch.DrawString(scoreFont, "Score: " + scoreTotal.ToString(), new Vector2(10, 10), Color.White);
             spriteBatch.DrawString(timerFont, "Time: " + timer.ToString(), new Vector2(400, 10), Color.White);
             spriteBatch.End();
+            
 
             foreach (Building building in levelGenerator.Buildings)
             {
                 building.Draw(spriteBatch);
+
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+                //smokeParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
+                building.FireParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
+                spriteBatch.End();
             }
 
             spriteBatch.Begin();
             spriteBatch.Draw(truck, truckPosition, Color.White);
             spriteBatch.End();
 
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-            //smokeParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
-            fireParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);            
             waterSprayParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
             spriteBatch.End();
 
