@@ -44,7 +44,7 @@ namespace StopTheFire
 
             int minHeight = 18;
             int minWidth = 10;
-            int maxHeight = 26;
+            int maxHeight = 24;
             int maxWidth = 18;
 
             int numFires = 2; //number of starting fires
@@ -53,12 +53,12 @@ namespace StopTheFire
 
             if(Level > 3)
             {
-                minHeight = 25;
+                minHeight = 24;
                 minWidth = 18;
-                maxHeight = 32;
+                maxHeight = 28;
                 maxWidth = 25;
 
-                numFires = 2 + (Level - 3);
+                numFires = 2 + (Level - 4);
 
                 numBuildings = 3;
             }
