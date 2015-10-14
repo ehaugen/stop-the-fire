@@ -51,8 +51,10 @@ namespace StopTheFire
         Texture2D window;
 
         Texture2D truck;
+        Texture2D siren;
         Vector2 truckPosition;
         Vector2 truckVelocity;
+        SpriteSheet sirenSheet;
 
         Texture2D waterSprayParticleBase;
         ParticleSystem waterSprayParticleSystem;
@@ -134,6 +136,7 @@ namespace StopTheFire
             buildingSwatch = Content.Load<Texture2D>("Sprites/BuildingSwatch");
             window = Content.Load<Texture2D>("Sprites/window");
             truck = Content.Load<Texture2D>("Sprites/FireTruck");
+            siren = Content.Load<Texture2D>("Sprites/Siren2");
             waterSprayParticleBase = Content.Load<Texture2D>("Sprites/waterspray");
             fireParticleBase = Content.Load<Texture2D>("Sprites/fire");
             //smokeParticleBase = Content.Load<Texture2D>("Sprites/fire");
@@ -143,6 +146,8 @@ namespace StopTheFire
             scoreFont = Content.Load<SpriteFont>("Fonts/Score");
             timerFont = Content.Load<SpriteFont>("Fonts/Timer");
             statusFont = Content.Load<SpriteFont>("Fonts/Status");
+
+            sirenSheet = new SpriteSheet(siren, 64, 64, 20, 4);
 
             ResetGame();
         }
@@ -208,7 +213,7 @@ namespace StopTheFire
                                                 , new Vector2(0.01f * MathHelper.Pi, 0.01f * -MathHelper.Pi)
                                                 , waterSprayDistance
                                                 , new Vector2(3, 4)
-                                                , new Vector2(1, 1.5f)
+                                                , new Vector2(1, 4)
                                                 , Color.LightBlue
                                                 , Color.White
                                                 , new Color(Color.LightBlue, 0)
@@ -494,6 +499,7 @@ namespace StopTheFire
             BreakForEach:
 
                 building.FireParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
+                sirenSheet.Update();
             }
 
             base.Update(gameTime);
@@ -523,6 +529,8 @@ namespace StopTheFire
                 building.FireParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
                 spriteBatch.End();
             }
+
+            sirenSheet.Draw(spriteBatch, truckPosition + new Vector2(12, 35));
 
             spriteBatch.Begin();
             spriteBatch.Draw(truck, truckPosition, Color.White);
