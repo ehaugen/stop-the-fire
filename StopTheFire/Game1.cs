@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.GamerServices;
+using Microsoft.Xna.Framework.Audio;
 
 using StopTheFire.Particles;
 #endregion
@@ -30,9 +31,14 @@ namespace StopTheFire
         //Fonts
         SpriteFont gameOverFont;
         SpriteFont instructionsFont;
+        SpriteFont attributionFont;
         SpriteFont scoreFont;
         SpriteFont timerFont;
         SpriteFont statusFont;
+
+        //Sounds
+        SoundEffect fireSound;
+        SoundEffectInstance fireSoundInstance;
 
         Texture2D background;
 
@@ -143,9 +149,14 @@ namespace StopTheFire
 
             gameOverFont = Content.Load<SpriteFont>("Fonts/GameOver");
             instructionsFont = Content.Load<SpriteFont>("Fonts/Instructions");
+            attributionFont = Content.Load<SpriteFont>("Fonts/Attribution");
             scoreFont = Content.Load<SpriteFont>("Fonts/Score");
             timerFont = Content.Load<SpriteFont>("Fonts/Timer");
             statusFont = Content.Load<SpriteFont>("Fonts/Status");
+
+            fireSound = Content.Load<SoundEffect>("SoundFX/Fire_Burning-JaBa-810606813");
+            fireSoundInstance = fireSound.CreateInstance();
+            fireSoundInstance.IsLooped = true;
 
             sirenSheet = new SpriteSheet(siren, 64, 64, 20, 4);
 
@@ -177,7 +188,7 @@ namespace StopTheFire
 
             levelGenerator = new LevelGenerator(pLevel, buildingSwatch, window, fireParticleBase);
 
-            gameState = GameState.Running;
+            fireSoundInstance.Play();
         }
 
         private void ResetScore()
@@ -264,6 +275,8 @@ namespace StopTheFire
                     //calculate score once
                     if (!gameState.Equals(GameState.LevelComplete))
                     {
+                        fireSoundInstance.Stop();
+
                         //waterSprayParticleSystem.Clear();
                         waterSprayParticleSystem.Update(gameTime.ElapsedGameTime.Milliseconds / 1000f);
 
@@ -292,6 +305,13 @@ namespace StopTheFire
 
                     break;
                 }
+            }
+
+            if(gameState.Equals(GameState.Loading))
+            {
+
+                if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
+                    gameState = GameState.Running;
             }
 
             if (gameState.Equals(GameState.Running))
@@ -518,27 +538,38 @@ namespace StopTheFire
             spriteBatch.DrawString(scoreFont, "Score: " + scoreTotal.ToString(), new Vector2(10, 10), Color.White);
             spriteBatch.DrawString(timerFont, "Time: " + timer.ToString(), new Vector2(400, 10), Color.White);
             spriteBatch.End();
-            
 
-            foreach (Building building in levelGenerator.Buildings)
+            if(gameState.Equals(GameState.Loading))
             {
-                building.Draw(spriteBatch);
-
-                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
-                //smokeParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
-                building.FireParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
+                spriteBatch.Begin();
+                spriteBatch.DrawString(instructionsFont, "Press Enter to start. (Press Esc to quit.)", new Vector2(200, 370), Color.White);
+                spriteBatch.DrawString(attributionFont, "Fire burning sound effect by Jaba http://soundbible.com/1902-Fire-Burning.html, available", new Vector2(150, 420), Color.White); 
+                spriteBatch.DrawString(attributionFont, "under Creative Commons Attribution 3.0 License https://creativecommons.org/licenses/by/3.0/us/", new Vector2(150, 435), Color.White);
                 spriteBatch.End();
             }
 
-            sirenSheet.Draw(spriteBatch, truckPosition + new Vector2(12, 35));
+            if (gameState.Equals(GameState.Running))
+            {
+                foreach (Building building in levelGenerator.Buildings)
+                {
+                    building.Draw(spriteBatch);
 
-            spriteBatch.Begin();
-            spriteBatch.Draw(truck, truckPosition, Color.White);
-            spriteBatch.End();
+                    spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+                    //smokeParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
+                    building.FireParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
+                    spriteBatch.End();
+                }
 
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);            
-            waterSprayParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
-            spriteBatch.End();
+                sirenSheet.Draw(spriteBatch, truckPosition + new Vector2(12, 35));
+
+                spriteBatch.Begin();
+                spriteBatch.Draw(truck, truckPosition, Color.White);
+                spriteBatch.End();
+
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive);
+                waterSprayParticleSystem.Draw(spriteBatch, 1, Vector2.Zero);
+                spriteBatch.End();
+            }
 
             if (gameState.Equals(GameState.GameOver))
             {
