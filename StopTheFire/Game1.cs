@@ -265,7 +265,11 @@ namespace StopTheFire
                     gameState = GameState.GameOver;
 
                     if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
+                    {
                         ResetGame();
+                        gameState = GameState.Running;
+                        sirenSoundInstance.Play();
+                    }
 
                     break;
                 }                
@@ -306,6 +310,9 @@ namespace StopTheFire
                             }
                             else
                                 ResetGame();
+
+                            gameState = GameState.Running;
+                            sirenSoundInstance.Play();
                         }
 
                     break;
@@ -601,7 +608,7 @@ namespace StopTheFire
                 }
                 else
                 {
-                    spriteBatch.DrawString(statusFont, "You won!", new Vector2(250, 150), Color.Yellow);
+                    spriteBatch.DrawString(statusFont, "You won!", new Vector2(300, 150), Color.Yellow);
                     if (scoreTotal.Equals(scorePrevious + scoreLevel))
                         spriteBatch.DrawString(instructionsFont, "Press Enter to play again. (Press Esc to quit.)", new Vector2(200, 370), Color.White);
 

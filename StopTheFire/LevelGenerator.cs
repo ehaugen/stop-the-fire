@@ -52,20 +52,59 @@ namespace StopTheFire
             int numBuildings = Level;
 
             if(Level > 3)
-            {
-                minHeight = 24;
-                minWidth = 18;
-                maxHeight = 28;
-                maxWidth = 25;
-
-                numFires = 2 + (Level - 4);
-
+            {              
+                //numFires = 2 + (Level - 4);
                 numBuildings = 3;
             }
 
             Buildings = new List<Building>();
             for (int i = 0; i < numBuildings; i++)
             {
+                switch (Level)
+                {
+                    case 3:
+                        //make third building larger
+                        if (i.Equals(3))
+                        {
+                            minHeight = 24;
+                            minWidth = 18;
+                            maxHeight = 28;
+                            maxWidth = 25;
+                        }
+                        break;
+                    case 4:
+                        //make second and third building larger
+                        if (i > 1)
+                        {
+                            minHeight = 24;
+                            minWidth = 18;
+                            maxHeight = 28;
+                            maxWidth = 25;
+                        }
+                        break;
+                    case 5:
+                        //make all buildings larger
+                        minHeight = 24;
+                        minWidth = 18;
+                        maxHeight = 28;
+                        maxWidth = 25;
+                        if(i.Equals(2))
+                        {
+                            numFires = 3;
+                        }
+                        break;
+                    case 6:
+                        //make all buildings larger
+                        minHeight = 24;
+                        minWidth = 18;
+                        maxHeight = 28;
+                        maxWidth = 25;
+                        if (i>0)
+                        {
+                            numFires = 3;
+                        }
+                        break;
+                }
                 var height = rand.Next(minHeight, maxHeight) * 10;
                 var width = rand.Next(minWidth, maxWidth) * 10;
                 var buildingPosition = new Vector2(350, 370 - height);
