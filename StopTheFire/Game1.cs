@@ -39,6 +39,8 @@ namespace StopTheFire
         //Sounds
         SoundEffect fireSound;
         SoundEffectInstance fireSoundInstance;
+        SoundEffect sirenSound;
+        SoundEffectInstance sirenSoundInstance;
 
         Texture2D background;
 
@@ -157,6 +159,9 @@ namespace StopTheFire
             fireSound = Content.Load<SoundEffect>("SoundFX/Fire_Burning-JaBa-810606813");
             fireSoundInstance = fireSound.CreateInstance();
             fireSoundInstance.IsLooped = true;
+
+            sirenSound = Content.Load<SoundEffect>("SoundFX/Fire Trucks Sirens 2-SoundBible.com-19361847");
+            sirenSoundInstance = sirenSound.CreateInstance();
 
             sirenSheet = new SpriteSheet(siren, 64, 64, 20, 4);
 
@@ -311,7 +316,10 @@ namespace StopTheFire
             {
 
                 if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
+                {
                     gameState = GameState.Running;
+                    sirenSoundInstance.Play();
+                }
             }
 
             if (gameState.Equals(GameState.Running))
@@ -543,8 +551,9 @@ namespace StopTheFire
             {
                 spriteBatch.Begin();
                 spriteBatch.DrawString(instructionsFont, "Press Enter to start. (Press Esc to quit.)", new Vector2(200, 370), Color.White);
-                spriteBatch.DrawString(attributionFont, "Fire burning sound effect by Jaba http://soundbible.com/1902-Fire-Burning.html, available", new Vector2(150, 420), Color.White); 
-                spriteBatch.DrawString(attributionFont, "under Creative Commons Attribution 3.0 License https://creativecommons.org/licenses/by/3.0/us/", new Vector2(150, 435), Color.White);
+                spriteBatch.DrawString(attributionFont, "Fire burning sound effect by Jaba http://soundbible.com/1902-Fire-Burning.html", new Vector2(50, 420), Color.White);
+                spriteBatch.DrawString(attributionFont, "Siren sound effect by FiremanSam http://soundbible.com/1494-Fire-Trucks-Sirens-2.html", new Vector2(50, 435), Color.White);
+                spriteBatch.DrawString(attributionFont, "All sound effects available under Creative Comons Attribution 3.0 License https://creativecommons.org/licenses/by/3.0/us/", new Vector2(50, 450), Color.White);
                 spriteBatch.End();
             }
 
