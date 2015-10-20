@@ -5,6 +5,9 @@ using System;
 
 namespace StopTheFire.Particles
 {
+    /// <summary>
+    /// MathLib class by Tigran, available via Tigran's Blog http://blog.tigrangasparian.com/2010/10/08/2d-particles-in-xna-part-1-of-3/
+    /// </summary>
     class MathLib
     {
         /* Begin Linear Interpolation method overloads */

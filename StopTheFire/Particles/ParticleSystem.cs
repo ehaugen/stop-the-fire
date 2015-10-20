@@ -6,6 +6,9 @@ using System.Collections.Generic;
 
 namespace StopTheFire.Particles
 {
+    /// <summary>
+    /// ParticleSystem modified from ParticleSystem class by Tigran, available via Tigran's Blog http://blog.tigrangasparian.com/2010/10/08/2d-particles-in-xna-part-1-of-3/
+    /// </summary>
     public class ParticleSystem
     {
         public List<Emitter> EmitterList { get; set; }
