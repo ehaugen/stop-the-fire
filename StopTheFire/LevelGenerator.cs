@@ -104,16 +104,25 @@ namespace StopTheFire
                             numFires = 3;
                         }
                         break;
+                    case 7:
+                        //make all buildings larger
+                        minHeight = 24;
+                        minWidth = 18;
+                        maxHeight = 28;
+                        maxWidth = 25;
+
+                        numFires = 3;
+                        break;
                 }
                 var height = rand.Next(minHeight, maxHeight) * 10;
                 var width = rand.Next(minWidth, maxWidth) * 10;
-                var buildingPosition = new Vector2(350, 370 - height);
+                var buildingPosition = new Vector2(300, 370 - height);
 
 
                 if (i.Equals(1))
-                    buildingPosition = new Vector2(350 - width - 10, 370 - height);
+                    buildingPosition = new Vector2(300 - width - 10, 370 - height);
                 else if (i.Equals(2))
-                    buildingPosition = new Vector2(350 + Buildings[0].Width + 10, 370 - height);
+                    buildingPosition = new Vector2(300 + Buildings[0].Width + 10, 370 - height);
 
                 var building = new Building(buildingSwatch, buildingPosition, width, height, new Window(window, 1));
 

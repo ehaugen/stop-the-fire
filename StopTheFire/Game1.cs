@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
-using Microsoft.Xna.Framework.GamerServices;
+//using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Audio;
 
 using StopTheFire.Particles;
@@ -20,7 +20,7 @@ namespace StopTheFire
     /// </summary>
     public class Game1 : Game
     {
-        private enum GameState { Loading, Running, LevelComplete, GameOver }
+        private enum GameState { Loading, Running, Paused, LevelComplete, GameOver }
 
 
         GraphicsDeviceManager graphics;
@@ -303,7 +303,7 @@ namespace StopTheFire
                     else
                         if (GamePad.GetState(PlayerIndex.One).Buttons.A == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Enter))
                         {
-                            if (level < 6)
+                            if (level < 7)
                             {
                                 level++;
                                 BuildLevel(level);
@@ -600,7 +600,7 @@ namespace StopTheFire
                 
                 spriteBatch.Begin();
 
-                if (level < 6)
+                if (level < 7)
                 {
                     spriteBatch.DrawString(statusFont, "Level Complete!", new Vector2(250, 150), Color.Yellow);
                     if (scoreTotal.Equals(scorePrevious + scoreLevel))
