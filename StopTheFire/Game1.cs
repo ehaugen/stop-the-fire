@@ -41,6 +41,8 @@ namespace StopTheFire
         SoundEffectInstance fireSoundInstance;
         SoundEffect sirenSound;
         SoundEffectInstance sirenSoundInstance;
+        SoundEffect tadaSound;
+        SoundEffectInstance tadaSoundInstance;
 
         Texture2D background;
 
@@ -162,6 +164,10 @@ namespace StopTheFire
 
             sirenSound = Content.Load<SoundEffect>("SoundFX/Fire Trucks Sirens 2-SoundBible.com-19361847");
             sirenSoundInstance = sirenSound.CreateInstance();
+
+            tadaSound = Content.Load<SoundEffect>("SoundFX/Ta Da-SoundBible.com-1884170640");
+            tadaSoundInstance = tadaSound.CreateInstance();
+            
 
             sirenSheet = new SpriteSheet(siren, 64, 64, 20, 4);
 
@@ -294,6 +300,8 @@ namespace StopTheFire
                         if (timeThreshold > timer)
                             scoreLevel = timeThreshold - timer; //bonus
                         scoreLevel += 10; //level complete
+
+                        tadaSoundInstance.Play();
 
                         gameState = GameState.LevelComplete;
                     }
@@ -558,8 +566,9 @@ namespace StopTheFire
             {
                 spriteBatch.Begin();
                 spriteBatch.DrawString(instructionsFont, "Press Enter to start. (Press Esc to quit.)", new Vector2(200, 370), Color.White);
-                spriteBatch.DrawString(attributionFont, "Fire burning sound effect by Jaba http://soundbible.com/1902-Fire-Burning.html", new Vector2(50, 420), Color.White);
-                spriteBatch.DrawString(attributionFont, "Siren sound effect by FiremanSam http://soundbible.com/1494-Fire-Trucks-Sirens-2.html", new Vector2(50, 435), Color.White);
+                spriteBatch.DrawString(attributionFont, "Fire burning sound effect by Jaba http://soundbible.com/1902-Fire-Burning.html", new Vector2(50, 405), Color.White);
+                spriteBatch.DrawString(attributionFont, "Siren sound effect by FiremanSam http://soundbible.com/1494-Fire-Trucks-Sirens-2.html", new Vector2(50, 420), Color.White);
+                spriteBatch.DrawString(attributionFont, "Tada sound effect by  Mike Koenig http://soundbible.com/1003-Ta-Da.html", new Vector2(50, 435), Color.White);
                 spriteBatch.DrawString(attributionFont, "All sound effects available under Creative Comons Attribution 3.0 License https://creativecommons.org/licenses/by/3.0/us/", new Vector2(50, 450), Color.White);
                 spriteBatch.End();
             }
